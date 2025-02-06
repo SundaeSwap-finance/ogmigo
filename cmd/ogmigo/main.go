@@ -99,19 +99,20 @@ func action(_ *cli.Context) error {
 			return nil
 		}
 
-		var response chainsync.ResponseFindIntersectionPraos
+		var response chainsync.ResponsePraos
 		if err := json.Unmarshal(data, &response); err != nil {
 			return err
 		}
 		if response.Result == nil {
 			return nil
 		}
-		if response.Result.Intersection == nil {
+		intersect := response.Result.(chainsync.ResultFindIntersectionPraos).Intersection
+		if intersect == nil {
 			return nil
 		}
 
-		ps, _ := response.Result.Intersection.PointStruct()
-		fmt.Printf("slot=%v id=%v block=%v\n", ps.Slot, ps.ID, ps.BlockNo)
+		ps, _ := intersect.PointStruct()
+		fmt.Printf("slot=%v id=%v block=%v\n", ps.Slot, ps.ID, ps.Height)
 
 		return nil
 	}
