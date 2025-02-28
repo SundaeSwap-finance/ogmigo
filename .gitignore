@@ -9,3 +9,7 @@ cmd/test_client/test_client
 # ignore generated
 target
 .DS_Store
+
+/ogmigo
+/test_client
+/test_mempool_client
