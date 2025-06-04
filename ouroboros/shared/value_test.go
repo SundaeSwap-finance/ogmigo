@@ -70,19 +70,58 @@ func Test_AddAsset(t *testing.T) {
 	var v2 Value
 	v2.AddAsset(
 		CreateAdaCoin(num.Uint64(1)),
-		Coin{AssetId: FromSeparate("da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24", "4c51"), Amount: num.Uint64(14310359231)},
+		Coin{
+			AssetId: FromSeparate(
+				"da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24",
+				"4c51",
+			),
+			Amount: num.Uint64(14310359231),
+		},
 	)
 	var v3 Value
 	v3.AddAsset(
-		Coin{AssetId: FromSeparate("da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24", "4c51"), Amount: num.Uint64(14310359231)},
+		Coin{
+			AssetId: FromSeparate(
+				"da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24",
+				"4c51",
+			),
+			Amount: num.Uint64(14310359231),
+		},
 	)
 
 	assert.EqualValues(t, v1, v2)
 	assert.EqualValues(t, 1, v2.AssetsExceptAdaCount())
 	assert.EqualValues(t, true, v2.IsAdaPresent())
 	assert.EqualValues(t, num.Uint64(1), v2.AssetAmount(AdaAssetID))
-	assert.EqualValues(t, num.Uint64(14310359231), v2.AssetAmount(FromSeparate("da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24", "4c51")))
-	assert.EqualValues(t, num.Uint64(0), v2.AssetAmount(FromSeparate("ea8c30857834c6ae7203935b89278c532b3995245295456f993e1d24", "4c51")))
-	assert.EqualValues(t, num.Uint64(0), v2.AssetAmount(FromSeparate("da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24", "4c52")))
+	assert.EqualValues(
+		t,
+		num.Uint64(14310359231),
+		v2.AssetAmount(
+			FromSeparate(
+				"da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24",
+				"4c51",
+			),
+		),
+	)
+	assert.EqualValues(
+		t,
+		num.Uint64(0),
+		v2.AssetAmount(
+			FromSeparate(
+				"ea8c30857834c6ae7203935b89278c532b3995245295456f993e1d24",
+				"4c51",
+			),
+		),
+	)
+	assert.EqualValues(
+		t,
+		num.Uint64(0),
+		v2.AssetAmount(
+			FromSeparate(
+				"da8c30857834c6ae7203935b89278c532b3995245295456f993e1d24",
+				"4c52",
+			),
+		),
+	)
 	assert.EqualValues(t, false, v3.IsAdaPresent())
 }

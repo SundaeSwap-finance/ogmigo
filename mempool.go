@@ -48,7 +48,9 @@ type MonitorMempoolOptions struct {
 	reconnect bool // reconnect to ogmios if connection drops
 }
 
-func buildMonitorMempoolOptions(opts ...MonitorMempoolOption) MonitorMempoolOptions {
+func buildMonitorMempoolOptions(
+	opts ...MonitorMempoolOption,
+) MonitorMempoolOptions {
 	var options MonitorMempoolOptions
 	for _, opt := range opts {
 		opt(&options)
@@ -58,7 +60,11 @@ func buildMonitorMempoolOptions(opts ...MonitorMempoolOption) MonitorMempoolOpti
 
 type MonitorMempoolOption func(opts *MonitorMempoolOptions)
 
-func (c *Client) MonitorMempool(ctx context.Context, callback MonitorMempoolFunc, opts ...MonitorMempoolOption) (*MonitorMempool, error) {
+func (c *Client) MonitorMempool(
+	ctx context.Context,
+	callback MonitorMempoolFunc,
+	opts ...MonitorMempoolOption,
+) (*MonitorMempool, error) {
 	options := buildMonitorMempoolOptions(opts...)
 
 	done := make(chan struct{})
@@ -76,7 +82,8 @@ func (c *Client) MonitorMempool(ctx context.Context, callback MonitorMempoolFunc
 			err = c.doMonitorMempool(ctx, callback, options)
 			if err != nil && isTemporaryError(err) {
 				if options.reconnect {
-					c.options.logger.Info("websocket connection error: will retry",
+					c.options.logger.Info(
+						"websocket connection error: will retry",
 						KV("delay", timeout.Round(time.Millisecond).String()),
 						KV("err", err.Error()),
 					)
@@ -125,10 +132,18 @@ type NextTransactionResponse struct {
 	}
 }
 
-func (c *Client) doMonitorMempool(ctx context.Context, callback MonitorMempoolFunc, options MonitorMempoolOptions) error {
+func (c *Client) doMonitorMempool(
+	ctx context.Context,
+	callback MonitorMempoolFunc,
+	options MonitorMempoolOptions,
+) error {
 	conn, _, err := websocket.DefaultDialer.Dial(c.options.endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("failed to connect to ogmios, %v: %w", c.options.endpoint, err)
+		return fmt.Errorf(
+			"failed to connect to ogmios, %v: %w",
+			c.options.endpoint,
+			err,
+		)
 	}
 
 	group, ctx := errgroup.WithContext(ctx)
@@ -154,8 +169,12 @@ func (c *Client) doMonitorMempool(ctx context.Context, callback MonitorMempoolFu
 	ch := make(chan MonitorState)
 
 	group.Go(func() error {
-		nextTransaction := []byte(`{"jsonrpc":"2.0","method":"nextTransaction","params":{"fields":"all"},"id":{}}`)
-		acquireMempool := []byte(`{"jsonrpc":"2.0","method":"acquireMempool","id":{"step":"MEMPOOLINIT"}}`)
+		nextTransaction := []byte(
+			`{"jsonrpc":"2.0","method":"nextTransaction","params":{"fields":"all"},"id":{}}`,
+		)
+		acquireMempool := []byte(
+			`{"jsonrpc":"2.0","method":"acquireMempool","id":{"step":"MEMPOOLINIT"}}`,
+		)
 		var todo MonitorState
 		for {
 			select {
@@ -171,11 +190,17 @@ func (c *Client) doMonitorMempool(ctx context.Context, callback MonitorMempoolFu
 								return nil // connection closed
 							}
 						}
-						return fmt.Errorf("failed to write acquireMempool: %w", err)
+						return fmt.Errorf(
+							"failed to write acquireMempool: %w",
+							err,
+						)
 					}
 				case NextTransaction:
 					if err := conn.WriteMessage(websocket.TextMessage, nextTransaction); err != nil {
-						return fmt.Errorf("failed to write nextTransaction: %w", err)
+						return fmt.Errorf(
+							"failed to write nextTransaction: %w",
+							err,
+						)
 					}
 				default:
 					return errors.New("invalid channel state")
@@ -213,7 +238,10 @@ func (c *Client) doMonitorMempool(ctx context.Context, callback MonitorMempoolFu
 
 			case websocket.PingMessage:
 				if err := conn.WriteMessage(websocket.PongMessage, nil); err != nil {
-					return fmt.Errorf("failed to respond with pong to ogmios: %w", err)
+					return fmt.Errorf(
+						"failed to respond with pong to ogmios: %w",
+						err,
+					)
 				}
 				continue
 
@@ -231,10 +259,14 @@ func (c *Client) doMonitorMempool(ctx context.Context, callback MonitorMempoolFu
 			nextTransactionErr := json.Unmarshal(data, &nextTransactionResponse)
 
 			if acquireMempoolErr != nil && nextTransactionErr != nil {
-				return fmt.Errorf("couldn't parse response from ogmios: %w", errors.Join(acquireMempoolErr, nextTransactionErr))
+				return fmt.Errorf(
+					"couldn't parse response from ogmios: %w",
+					errors.Join(acquireMempoolErr, nextTransactionErr),
+				)
 			}
 
-			if acquireMempoolResponse.Method == "acquireMempool" && acquireMempoolErr == nil {
+			if acquireMempoolResponse.Method == "acquireMempool" &&
+				acquireMempoolErr == nil {
 				slot = acquireMempoolResponse.Result.Slot
 				ch <- NextTransaction
 			} else if nextTransactionResponse.Method == "nextTransaction" && nextTransactionResponse.Result.Transaction == nil {

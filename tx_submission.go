@@ -27,7 +27,7 @@ import (
 )
 
 type Response struct {
-	Transaction ResponseTx `json:"transaction,omitempty"  dynamodbav:"transaction,omitempty"`
+	Transaction ResponseTx `json:"transaction,omitempty" dynamodbav:"transaction,omitempty"`
 }
 
 type ResponseTx struct {
@@ -49,13 +49,20 @@ type SubmitTx struct {
 
 // SubmitTx submits the transaction via ogmios
 // https://ogmios.dev/mini-protocols/local-tx-submission/
-func (c *Client) SubmitTx(ctx context.Context, data string) (s *SubmitTxResponse, err error) {
+func (c *Client) SubmitTx(
+	ctx context.Context,
+	data string,
+) (s *SubmitTxResponse, err error) {
 	tx := SubmitTx{
 		Cbor: data,
 	}
 	var (
-		payload = makePayload("submitTransaction", Map{"transaction": tx}, Map{})
-		raw     json.RawMessage
+		payload = makePayload(
+			"submitTransaction",
+			Map{"transaction": tx},
+			Map{},
+		)
+		raw json.RawMessage
 	)
 	if err := c.query(ctx, payload, &raw); err != nil {
 		return nil, fmt.Errorf("failed to submit TX: %w", err)
@@ -68,7 +75,11 @@ func readSubmitTx(data []byte) (r *SubmitTxResponse, err error) {
 	e, err1 := readSubmitTxError(data)
 	id, err2 := readSubmitTxResult(data)
 	if err1 != nil && err2 != nil {
-		return nil, fmt.Errorf("could not parse submit tx response; neither error (%w) nor result (%w)", err1, err2)
+		return nil, fmt.Errorf(
+			"could not parse submit tx response; neither error (%w) nor result (%w)",
+			err1,
+			err2,
+		)
 	}
 	if err1 == nil {
 		return &SubmitTxResponse{Error: e}, nil
@@ -76,7 +87,10 @@ func readSubmitTx(data []byte) (r *SubmitTxResponse, err error) {
 	if err2 == nil {
 		return &SubmitTxResponse{ID: id}, nil
 	}
-	return nil, fmt.Errorf("could not parse submit tx response: %s", string(data))
+	return nil, fmt.Errorf(
+		"could not parse submit tx response: %s",
+		string(data),
+	)
 }
 
 type SubmitTxResponse struct {
@@ -93,11 +107,19 @@ type SubmitTxError struct {
 func readSubmitTxError(data []byte) (*SubmitTxError, error) {
 	value, _, _, err := jsonparser.Get(data, "error")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse SubmitTx error: %w %s", err, data)
+		return nil, fmt.Errorf(
+			"failed to parse SubmitTx error: %w %s",
+			err,
+			data,
+		)
 	}
 	var e SubmitTxError
 	if err := json.Unmarshal(value, &e); err != nil {
-		return nil, fmt.Errorf("failed to parse SubmitTx error: %w %s", err, data)
+		return nil, fmt.Errorf(
+			"failed to parse SubmitTx error: %w %s",
+			err,
+			data,
+		)
 	}
 	return &e, nil
 }
@@ -105,7 +127,11 @@ func readSubmitTxError(data []byte) (*SubmitTxError, error) {
 func readSubmitTxResult(data []byte) (string, error) {
 	value, dataType, _, err := jsonparser.Get(data, "result")
 	if err != nil {
-		return "", fmt.Errorf("failed to parse SubmitTx response: %w %s", err, string(data))
+		return "", fmt.Errorf(
+			"failed to parse SubmitTx response: %w %s",
+			err,
+			string(data),
+		)
 	}
 
 	switch dataType {
@@ -157,7 +183,10 @@ func (s SubmitTxErrorV5) ErrorCodes() (keys []string, err error) {
 		if bytes.HasPrefix(data, []byte(`"`)) {
 			var key string
 			if err := json.Unmarshal(data, &key); err != nil {
-				return nil, fmt.Errorf("failed to decode string, %v", string(data))
+				return nil, fmt.Errorf(
+					"failed to decode string, %v",
+					string(data),
+				)
 			}
 			keys = append(keys, key)
 			continue
@@ -200,7 +229,10 @@ func readSubmitTxV5(data []byte) error {
 	case jsonparser.Array:
 		var messages []json.RawMessage
 		if err := json.Unmarshal(value, &messages); err != nil {
-			return fmt.Errorf("failed to parse SubmitTx response: array: %w", err)
+			return fmt.Errorf(
+				"failed to parse SubmitTx response: array: %w",
+				err,
+			)
 		}
 		if len(messages) == 0 {
 			return nil

@@ -35,13 +35,13 @@ var bNil = []byte("nil")
 
 // Use V5 materials only for JSON backwards compatibility.
 type TxV5 struct {
-	ID          string            `json:"id,omitempty"       dynamodbav:"id,omitempty"`
-	InputSource string            `json:"inputSource,omitempty"  dynamodbav:"inputSource,omitempty"`
-	Body        TxBodyV5          `json:"body,omitempty"     dynamodbav:"body,omitempty"`
-	Witness     chainsync.Witness `json:"witness,omitempty"  dynamodbav:"witness,omitempty"`
-	Metadata    json.RawMessage   `json:"metadata,omitempty" dynamodbav:"metadata,omitempty"`
+	ID          string            `json:"id,omitempty"          dynamodbav:"id,omitempty"`
+	InputSource string            `json:"inputSource,omitempty" dynamodbav:"inputSource,omitempty"`
+	Body        TxBodyV5          `json:"body,omitempty"        dynamodbav:"body,omitempty"`
+	Witness     chainsync.Witness `json:"witness,omitempty"     dynamodbav:"witness,omitempty"`
+	Metadata    json.RawMessage   `json:"metadata,omitempty"    dynamodbav:"metadata,omitempty"`
 	// Raw serialized transaction, base64.
-	Raw string `json:"raw,omitempty" dynamodbav:"raw,omitempty"`
+	Raw string `json:"raw,omitempty"         dynamodbav:"raw,omitempty"`
 }
 
 // CAVEAT: v5->v6 conversion is, to some degree, best-effort-only. For example, some fields
@@ -95,7 +95,10 @@ func (t TxV5) ConvertToV6() chainsync.Tx {
 		if decodedSig, error := base64.StdEncoding.DecodeString(newSig); error == nil {
 			newSig = hex.EncodeToString(decodedSig)
 		}
-		signatories = append(signatories, chainsync.Signature{Key: key, Signature: newSig})
+		signatories = append(
+			signatories,
+			chainsync.Signature{Key: key, Signature: newSig},
+		)
 	}
 
 	// Give it a sort, mostly for unit tests, so we don't intermittently fail
@@ -186,7 +189,9 @@ func TxFromV6(t chainsync.Tx) TxV5 {
 		if newSig.ChainCode != "" || newSig.AddressAttributes != "" {
 			if newSig.AddressAttributes != "" {
 				attrData, _ := hex.DecodeString(newSig.AddressAttributes)
-				newSig.AddressAttributes = base64.StdEncoding.EncodeToString(attrData)
+				newSig.AddressAttributes = base64.StdEncoding.EncodeToString(
+					attrData,
+				)
 			}
 			s, _ := json.Marshal(newSig)
 			witness.Bootstrap = append(witness.Bootstrap, s)
@@ -343,8 +348,8 @@ func (tt TxOutsV5) FindByAssetID(assetID shared.AssetID) (TxOutV5, bool) {
 }
 
 type ValidityIntervalV5 struct {
-	InvalidBefore    uint64 `json:"invalidBefore,omitempty"     dynamodbav:"invalidBefore,omitempty"`
-	InvalidHereafter uint64 `json:"invalidHereafter,omitempty"  dynamodbav:"invalidHereafter,omitempty"`
+	InvalidBefore    uint64 `json:"invalidBefore,omitempty"    dynamodbav:"invalidBefore,omitempty"`
+	InvalidHereafter uint64 `json:"invalidHereafter,omitempty" dynamodbav:"invalidHereafter,omitempty"`
 }
 
 func (v ValidityIntervalV5) ConvertToV6() chainsync.ValidityInterval {
@@ -362,8 +367,8 @@ func ValidityIntervalFromV6(v chainsync.ValidityInterval) ValidityIntervalV5 {
 }
 
 type ValueV5 struct {
-	Coins  num.Int                    `json:"coins,omitempty"  dynamodbav:"coins,omitempty"`
-	Assets map[shared.AssetID]num.Int `json:"assets" dynamodbav:"assets,omitempty"`
+	Coins  num.Int                    `json:"coins,omitempty" dynamodbav:"coins,omitempty"`
+	Assets map[shared.AssetID]num.Int `json:"assets"          dynamodbav:"assets,omitempty"`
 }
 
 func (v ValueV5) ConvertToV6() shared.Value {
@@ -484,7 +489,11 @@ func (p PointV5) String() string {
 	case chainsync.PointTypeString:
 		return string(p.pointString)
 	case chainsync.PointTypeStruct:
-		return fmt.Sprintf("slot=%v hash=%v", p.pointStruct.Slot, p.pointStruct.Hash)
+		return fmt.Sprintf(
+			"slot=%v hash=%v",
+			p.pointStruct.Slot,
+			p.pointStruct.Hash,
+		)
 	default:
 		return "invalid point"
 	}
@@ -612,7 +621,11 @@ func (p *PointV5) UnmarshalJSON(data []byte) error {
 	case '"':
 		var s string
 		if err := json.Unmarshal(data, &s); err != nil {
-			return fmt.Errorf("failed to unmarshal Point, %v: %w", string(data), err)
+			return fmt.Errorf(
+				"failed to unmarshal Point, %v: %w",
+				string(data),
+				err,
+			)
 		}
 
 		*p = PointV5{
@@ -623,7 +636,11 @@ func (p *PointV5) UnmarshalJSON(data []byte) error {
 	default:
 		var ps PointStructV5
 		if err := json.Unmarshal(data, &ps); err != nil {
-			return fmt.Errorf("failed to unmarshal Point, %v: %w", string(data), err)
+			return fmt.Errorf(
+				"failed to unmarshal Point, %v: %w",
+				string(data),
+				err,
+			)
 		}
 
 		*p = PointV5{
@@ -669,7 +686,9 @@ func (r ResultFindIntersectionV5) ConvertToV6() chainsync.ResultFindIntersection
 	return rfi
 }
 
-func ResultFindIntersectionFromV6(rfi chainsync.ResultFindIntersectionPraos) ResultFindIntersectionV5 {
+func ResultFindIntersectionFromV6(
+	rfi chainsync.ResultFindIntersectionPraos,
+) ResultFindIntersectionV5 {
 	var r ResultFindIntersectionV5
 	if rfi.Intersection != nil {
 		p := PointFromV6(*rfi.Intersection)
@@ -770,7 +789,9 @@ func (b RollForwardBlockV5) ConvertToV6() (chainsync.Block, error) {
 	if nbb.Header.OpCert != nil {
 		var vk []byte
 		if nbb.Header.OpCert["hotVk"] != nil {
-			vk, _ = base64.StdEncoding.DecodeString(nbb.Header.OpCert["hotVk"].(string))
+			vk, _ = base64.StdEncoding.DecodeString(
+				nbb.Header.OpCert["hotVk"].(string),
+			)
 		}
 		count := nbb.Header.OpCert["count"]
 		kesPd := nbb.Header.OpCert["kesPeriod"]
@@ -780,15 +801,23 @@ func (b RollForwardBlockV5) ConvertToV6() (chainsync.Block, error) {
 		// compiles but crashes at runtime. So, we cast float64 to uint64.
 		opCert = chainsync.OpCert{
 			Count: uint64(count.(float64)),
-			Kes:   chainsync.Kes{Period: uint64(kesPd.(float64)), VerificationKey: string(vk)},
+			Kes: chainsync.Kes{
+				Period:          uint64(kesPd.(float64)),
+				VerificationKey: string(vk),
+			},
 		}
 	}
 
 	// TODO: this might be wrong
 	var leaderValue *chainsync.LeaderValue
-	if nbb.Header.LeaderValue["output"] != nil && nbb.Header.LeaderValue["proof"] != nil {
-		decodedOutput, _ := base64.StdEncoding.DecodeString(string(nbb.Header.LeaderValue["output"]))
-		decodedProof, _ := base64.StdEncoding.DecodeString(string(nbb.Header.LeaderValue["proof"]))
+	if nbb.Header.LeaderValue["output"] != nil &&
+		nbb.Header.LeaderValue["proof"] != nil {
+		decodedOutput, _ := base64.StdEncoding.DecodeString(
+			string(nbb.Header.LeaderValue["output"]),
+		)
+		decodedProof, _ := base64.StdEncoding.DecodeString(
+			string(nbb.Header.LeaderValue["proof"]),
+		)
 		leaderValue = &chainsync.LeaderValue{
 			Output: string(decodedOutput),
 			Proof:  string(decodedProof),
@@ -830,11 +859,16 @@ func BlockFromV6(b chainsync.Block) (RollForwardBlockV5, error) {
 
 	var nonce map[string]string
 	if b.Nonce != nil {
-		nonce = map[string]string{"output": b.Nonce.Output, "proof": b.Nonce.Proof}
+		nonce = map[string]string{
+			"output": b.Nonce.Output,
+			"proof":  b.Nonce.Proof,
+		}
 	}
 	protocolVersion := b.Protocol.Version
 
-	vkey, _ := hex.DecodeString(b.Issuer.OperationalCertificate.Kes.VerificationKey)
+	vkey, _ := hex.DecodeString(
+		b.Issuer.OperationalCertificate.Kes.VerificationKey,
+	)
 	hotVk := base64.StdEncoding.EncodeToString(vkey)
 	opCert := map[string]interface{}{
 		"hotVk":     hotVk,
@@ -846,8 +880,12 @@ func BlockFromV6(b chainsync.Block) (RollForwardBlockV5, error) {
 	output := ""
 	proof := ""
 	if b.Issuer.LeaderValue != nil {
-		output = base64.StdEncoding.EncodeToString([]byte(b.Issuer.LeaderValue.Output))
-		proof = base64.StdEncoding.EncodeToString([]byte(b.Issuer.LeaderValue.Proof))
+		output = base64.StdEncoding.EncodeToString(
+			[]byte(b.Issuer.LeaderValue.Output),
+		)
+		proof = base64.StdEncoding.EncodeToString(
+			[]byte(b.Issuer.LeaderValue.Proof),
+		)
 	}
 	leaderValue := map[string][]byte{
 		"output": []byte(output),
@@ -857,17 +895,21 @@ func BlockFromV6(b chainsync.Block) (RollForwardBlockV5, error) {
 	bv5 := BlockV5{
 		Body: txArray,
 		Header: BlockHeaderV5{
-			Nonce:           nonce,
-			ProtocolVersion: map[string]int{"major": int(protocolVersion.Major), "minor": int(protocolVersion.Minor), "patch": int(protocolVersion.Patch)},
-			OpCert:          opCert,
-			LeaderValue:     leaderValue,
-			IssuerVK:        b.Issuer.VerificationKey,
-			IssuerVrf:       b.Issuer.VrfVerificationKey,
-			PrevHash:        b.Ancestor,
-			Slot:            b.Slot,
-			BlockHeight:     b.Height,
-			BlockSize:       uint64(b.Size.Bytes),
-			BlockHash:       b.ID,
+			Nonce: nonce,
+			ProtocolVersion: map[string]int{
+				"major": int(protocolVersion.Major),
+				"minor": int(protocolVersion.Minor),
+				"patch": int(protocolVersion.Patch),
+			},
+			OpCert:      opCert,
+			LeaderValue: leaderValue,
+			IssuerVK:    b.Issuer.VerificationKey,
+			IssuerVrf:   b.Issuer.VrfVerificationKey,
+			PrevHash:    b.Ancestor,
+			Slot:        b.Slot,
+			BlockHeight: b.Height,
+			BlockSize:   uint64(b.Size.Bytes),
+			BlockHash:   b.ID,
 		},
 		HeaderHash: b.ID,
 	}
@@ -931,7 +973,9 @@ func (r ResultNextBlockV5) ConvertToV6() chainsync.ResultNextBlockPraos {
 	return rnb
 }
 
-func ResultNextBlockFromV6(rnb chainsync.ResultNextBlockPraos) ResultNextBlockV5 {
+func ResultNextBlockFromV6(
+	rnb chainsync.ResultNextBlockPraos,
+) ResultNextBlockV5 {
 	var r ResultNextBlockV5
 	switch rnb.Direction {
 	case chainsync.RollForwardString:
@@ -1095,7 +1139,10 @@ type OgmiosAuxiliaryDataV5 struct {
 	Body *OgmiosAuxiliaryDataV5Body `json:"body"`
 }
 
-func GetMetadataDatumsV5(txMetadata json.RawMessage, metadataDatumKey int) ([][]byte, error) {
+func GetMetadataDatumsV5(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) ([][]byte, error) {
 	datums, err := GetMetadataDatumMapV5(txMetadata, metadataDatumKey)
 	if err != nil {
 		return nil, err
@@ -1103,7 +1150,10 @@ func GetMetadataDatumsV5(txMetadata json.RawMessage, metadataDatumKey int) ([][]
 	return chainsync.GetMetadataDatums(datums)
 }
 
-func GetMetadataDatumMapV5(txMetadata json.RawMessage, metadataDatumKey int) (map[string][]byte, error) {
+func GetMetadataDatumMapV5(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) (map[string][]byte, error) {
 	// Ogmios will sometimes set the Metadata field to "null" when there's not
 	// any actual metadata. This can lead to unintended errors. If we encounter
 	// this case, just return an empty map.
@@ -1140,7 +1190,9 @@ func (t OgmiosAuxiliaryDataV5) ConvertToV6() chainsync.OgmiosAuxiliaryDataV6 {
 }
 
 // NOTE: This works only for JSON metadata. Entries with CBOR metadata are ignored.
-func OgmiosAuxiliaryDataFromV6(t chainsync.OgmiosAuxiliaryDataV6) (OgmiosAuxiliaryDataV5, error) {
+func OgmiosAuxiliaryDataFromV6(
+	t chainsync.OgmiosAuxiliaryDataV6,
+) (OgmiosAuxiliaryDataV5, error) {
 	if t.Labels == nil {
 		return OgmiosAuxiliaryDataV5{}, nil
 	}

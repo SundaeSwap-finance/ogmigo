@@ -55,7 +55,7 @@ type Nonce struct {
 }
 
 type BlockSize struct {
-	Bytes int64 `json:"bytes,omitempty"  dynamodbav:"bytes,omitempty"`
+	Bytes int64 `json:"bytes,omitempty" dynamodbav:"bytes,omitempty"`
 }
 
 type Protocol struct {
@@ -104,8 +104,8 @@ func (p PointString) Point() Point {
 
 type PointStruct struct {
 	Height *uint64 `json:"height,omitempty" dynamodbav:"height,omitempty"` // Not part of RollBackward.
-	ID     string  `json:"id,omitempty"      dynamodbav:"id,omitempty"`    // BLAKE2b_256 hash
-	Slot   uint64  `json:"slot,omitempty"    dynamodbav:"slot,omitempty"`
+	ID     string  `json:"id,omitempty"     dynamodbav:"id,omitempty"`     // BLAKE2b_256 hash
+	Slot   uint64  `json:"slot,omitempty"   dynamodbav:"slot,omitempty"`
 }
 
 func (p PointStruct) Point() Point {
@@ -127,9 +127,18 @@ func (p Point) String() string {
 		return string(p.pointString)
 	case PointTypeStruct:
 		if p.pointStruct.Height == nil {
-			return fmt.Sprintf("slot=%v id=%v", p.pointStruct.Slot, p.pointStruct.ID)
+			return fmt.Sprintf(
+				"slot=%v id=%v",
+				p.pointStruct.Slot,
+				p.pointStruct.ID,
+			)
 		}
-		return fmt.Sprintf("slot=%v id=%v block=%v", p.pointStruct.Slot, p.pointStruct.ID, *p.pointStruct.Height)
+		return fmt.Sprintf(
+			"slot=%v id=%v block=%v",
+			p.pointStruct.Slot,
+			p.pointStruct.ID,
+			*p.pointStruct.Height,
+		)
 	default:
 		return "invalid point"
 	}
@@ -167,12 +176,15 @@ type pointCBOR struct {
 	Struct *PointStruct `cbor:"2,keyasint,omitempty"`
 }
 
-func (p Point) PointType() PointType             { return p.pointType }
+func (p Point) PointType() PointType { return p.pointType }
+
 func (p Point) PointString() (PointString, bool) { return p.pointString, p.pointString != "" }
 
 func (p Point) PointStruct() (*PointStruct, bool) { return p.pointStruct, p.pointStruct != nil }
 
-func (p Point) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (p Point) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	switch p.pointType {
 	case PointTypeString:
 		item.S = aws.String(string(p.pointString))
@@ -236,7 +248,9 @@ func (p *Point) UnmarshalCBOR(data []byte) error {
 	return nil
 }
 
-func (p *Point) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (p *Point) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	switch {
 	case item == nil:
 		return nil
@@ -263,7 +277,11 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	case '"':
 		var s string
 		if err := json.Unmarshal(data, &s); err != nil {
-			return fmt.Errorf("failed to unmarshal Point, %v: %w", string(data), err)
+			return fmt.Errorf(
+				"failed to unmarshal Point, %v: %w",
+				string(data),
+				err,
+			)
 		}
 
 		*p = Point{
@@ -274,7 +292,11 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	default:
 		var ps PointStruct
 		if err := json.Unmarshal(data, &ps); err != nil {
-			return fmt.Errorf("failed to unmarshal Point, %v: %w", string(data), err)
+			return fmt.Errorf(
+				"failed to unmarshal Point, %v: %w",
+				string(data),
+				err,
+			)
 		}
 
 		*p = Point{
@@ -294,20 +316,20 @@ type ProtocolVersion struct {
 
 type RollBackward struct {
 	Direction string            `json:"direction,omitempty" dynamodbav:"direction,omitempty"`
-	Tip       PointStruct       `json:"tip,omitempty"   dynamodbav:"tip,omitempty"`
-	Point     RollBackwardPoint `json:"point,omitempty" dynamodbav:"point,omitempty"`
+	Tip       PointStruct       `json:"tip,omitempty"       dynamodbav:"tip,omitempty"`
+	Point     RollBackwardPoint `json:"point,omitempty"     dynamodbav:"point,omitempty"`
 }
 
 type RollBackwardPoint struct {
-	Slot uint64 `json:"slot,omitempty"    dynamodbav:"slot,omitempty"`
-	ID   string `json:"id,omitempty"      dynamodbav:"id,omitempty"` // BLAKE2b_256 hash
+	Slot uint64 `json:"slot,omitempty" dynamodbav:"slot,omitempty"`
+	ID   string `json:"id,omitempty"   dynamodbav:"id,omitempty"` // BLAKE2b_256 hash
 }
 
 // Assume non-Byron blocks.
 type RollForward struct {
 	Direction string      `json:"direction,omitempty" dynamodbav:"direction,omitempty"`
-	Tip       PointStruct `json:"tip,omitempty"   dynamodbav:"tip,omitempty"`
-	Block     Block       `json:"block,omitempty" dynamodbav:"block,omitempty"`
+	Tip       PointStruct `json:"tip,omitempty"       dynamodbav:"tip,omitempty"`
+	Block     Block       `json:"block,omitempty"     dynamodbav:"block,omitempty"`
 }
 
 func (b Block) PointStruct() PointStruct {
@@ -410,7 +432,12 @@ func (r *ResponsePraos) UnmarshalJSON(b []byte) error {
 
 func (r ResponsePraos) MustFindIntersectResult() ResultFindIntersectionPraos {
 	if r.Method != FindIntersectionMethod {
-		panic(fmt.Errorf("must only use *Must* methods after switching on the findIntersection method; called on %v", r.Method))
+		panic(
+			fmt.Errorf(
+				"must only use *Must* methods after switching on the findIntersection method; called on %v",
+				r.Method,
+			),
+		)
 	}
 	t, ok := r.Result.(ResultFindIntersectionPraos)
 	if ok {
@@ -425,7 +452,12 @@ func (r ResponsePraos) MustFindIntersectResult() ResultFindIntersectionPraos {
 
 func (r ResponsePraos) MustNextBlockResult() ResultNextBlockPraos {
 	if r.Method != NextBlockMethod {
-		panic(fmt.Errorf("must only use *Must* methods after switching on the nextBlock method; called on %v", r.Method))
+		panic(
+			fmt.Errorf(
+				"must only use *Must* methods after switching on the nextBlock method; called on %v",
+				r.Method,
+			),
+		)
 	}
 	t, ok := r.Result.(ResultNextBlockPraos)
 	if ok {
@@ -439,9 +471,9 @@ func (r ResponsePraos) MustNextBlockResult() ResultNextBlockPraos {
 }
 
 type Signature struct {
-	Key               string `json:"key" dynamodbav:"key"`
-	Signature         string `json:"signature" dynamodbav:"signature"`
-	ChainCode         string `json:"chainCode,omitempty" dynamodbav:"chainCode,omitempty"`
+	Key               string `json:"key"                         dynamodbav:"key"`
+	Signature         string `json:"signature"                   dynamodbav:"signature"`
+	ChainCode         string `json:"chainCode,omitempty"         dynamodbav:"chainCode,omitempty"`
 	AddressAttributes string `json:"addressAttributes,omitempty" dynamodbav:"addressAttributes,omitempty"`
 }
 
@@ -500,14 +532,14 @@ func (t TxID) TxHash() string {
 }
 
 type TxIn struct {
-	Transaction TxInID `json:"transaction"  dynamodbav:"transaction"`
-	Index       int    `json:"index" dynamodbav:"index"`
+	Transaction TxInID `json:"transaction" dynamodbav:"transaction"`
+	Index       int    `json:"index"       dynamodbav:"index"`
 }
 
 type TxIns []TxIn
 
 type TxInID struct {
-	ID string `json:"id"  dynamodbav:"id"`
+	ID string `json:"id" dynamodbav:"id"`
 }
 
 func (t TxIn) String() string {
@@ -531,8 +563,8 @@ type TxOuts []TxOut
 type Datums map[string]string
 
 type TxInQuery struct {
-	Transaction shared.UtxoTxID `json:"transaction"  dynamodbav:"transaction"`
-	Index       uint32          `json:"index" dynamodbav:"index"`
+	Transaction shared.UtxoTxID `json:"transaction" dynamodbav:"transaction"`
+	Index       uint32          `json:"index"       dynamodbav:"index"`
 }
 
 func (d *Datums) UnmarshalJSON(i []byte) error {
@@ -570,7 +602,9 @@ func (d *Datums) UnmarshalJSON(i []byte) error {
 	return nil
 }
 
-func (d *Datums) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (d *Datums) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	if item == nil {
 		return nil
 	}
@@ -596,7 +630,7 @@ func (d *Datums) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) 
 
 type Witness struct {
 	Bootstrap  []json.RawMessage `json:"bootstrap,omitempty"  dynamodbav:"bootstrap,omitempty"`
-	Datums     Datums            `json:"datums"     dynamodbav:"datums,omitempty"`
+	Datums     Datums            `json:"datums"               dynamodbav:"datums,omitempty"`
 	Redeemers  json.RawMessage   `json:"redeemers,omitempty"  dynamodbav:"redeemers,omitempty"`
 	Scripts    json.RawMessage   `json:"scripts,omitempty"    dynamodbav:"scripts,omitempty"`
 	Signatures map[string]string `json:"signatures,omitempty" dynamodbav:"signatures,omitempty"`
@@ -722,7 +756,10 @@ func GetMetadataDatums(datums map[string][]byte) ([][]byte, error) {
 	return datumBytes, nil
 }
 
-func GetMetadataDatumsV6(txMetadata json.RawMessage, metadataDatumKey int) ([][]byte, error) {
+func GetMetadataDatumsV6(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) ([][]byte, error) {
 	datums, err := GetMetadataDatumMapV6(txMetadata, metadataDatumKey)
 	if err != nil {
 		return nil, err
@@ -730,7 +767,10 @@ func GetMetadataDatumsV6(txMetadata json.RawMessage, metadataDatumKey int) ([][]
 	return GetMetadataDatums(datums)
 }
 
-func GetMetadataDatumMapV6(txMetadata json.RawMessage, metadataDatumKey int) (map[string][]byte, error) {
+func GetMetadataDatumMapV6(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) (map[string][]byte, error) {
 	// Ogmios will sometimes set the Metadata field to "null" when there's not
 	// any actual metadata. This can lead to unintended errors. If we encounter
 	// this case, just return an empty map.
@@ -750,7 +790,11 @@ func GetMetadataDatumMapV6(txMetadata json.RawMessage, metadataDatumKey int) (ma
 		return nil, nil
 	}
 	if dats.Json == nil {
-		return nil, fmt.Errorf("transaction metadata at key '%d' is missing a json representation: '%v' (is ogmios running with --metadata-detailed-schema?)", metadataDatumKey, string(txMetadata))
+		return nil, fmt.Errorf(
+			"transaction metadata at key '%d' is missing a json representation: '%v' (is ogmios running with --metadata-detailed-schema?)",
+			metadataDatumKey,
+			string(txMetadata),
+		)
 	}
 	return ReconstructDatums(*(dats.Json))
 }
@@ -768,7 +812,9 @@ func ReconstructDatums(metadatum OgmiosMetadatum) (map[string][]byte, error) {
 				switch v.Tag {
 				case OgmiosMetadatumTagList:
 					for _, chunk := range v.ListField {
-						reconstructed = append(reconstructed, chunk.BytesField...)
+						reconstructed = append(
+							reconstructed,
+							chunk.BytesField...)
 					}
 					newDatums[hex.EncodeToString(k.BytesField)] = reconstructed
 				default: // Misformed, ignore

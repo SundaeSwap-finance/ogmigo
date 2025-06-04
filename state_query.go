@@ -67,7 +67,9 @@ func (c *Client) CurrentEpoch(ctx context.Context) (uint64, error) {
 	return content.Result, nil
 }
 
-func (c *Client) CurrentProtocolParameters(ctx context.Context) (json.RawMessage, error) {
+func (c *Client) CurrentProtocolParameters(
+	ctx context.Context,
+) (json.RawMessage, error) {
 	var (
 		payload = makePayload("queryLedgerState/protocolParameters", Map{}, nil)
 		content struct{ Result json.RawMessage }
@@ -80,9 +82,14 @@ func (c *Client) CurrentProtocolParameters(ctx context.Context) (json.RawMessage
 	return content.Result, nil
 }
 
-func (c *Client) CurrentProtocolParametersV5(ctx context.Context) (json.RawMessage, error) {
+func (c *Client) CurrentProtocolParametersV5(
+	ctx context.Context,
+) (json.RawMessage, error) {
 	var (
-		payload = makePayloadV5("Query", Map{"query": "currentProtocolParameters"})
+		payload = makePayloadV5(
+			"Query",
+			Map{"query": "currentProtocolParameters"},
+		)
 		content struct{ Result json.RawMessage }
 	)
 
@@ -93,9 +100,16 @@ func (c *Client) CurrentProtocolParametersV5(ctx context.Context) (json.RawMessa
 	return content.Result, nil
 }
 
-func (c *Client) GenesisConfig(ctx context.Context, era string) (json.RawMessage, error) {
+func (c *Client) GenesisConfig(
+	ctx context.Context,
+	era string,
+) (json.RawMessage, error) {
 	var (
-		payload = makePayload("queryNetwork/genesisConfiguration", Map{"era": era}, nil)
+		payload = makePayload(
+			"queryNetwork/genesisConfiguration",
+			Map{"era": era},
+			nil,
+		)
 		content struct{ Result json.RawMessage }
 	)
 
@@ -195,9 +209,16 @@ func (c *Client) EraStart(ctx context.Context) (statequery.EraStart, error) {
 	return content.Result, nil
 }
 
-func (c *Client) UtxosByAddress(ctx context.Context, addresses ...string) ([]shared.Utxo, error) {
+func (c *Client) UtxosByAddress(
+	ctx context.Context,
+	addresses ...string,
+) ([]shared.Utxo, error) {
 	var (
-		payload = makePayload("queryLedgerState/utxo", Map{"addresses": addresses}, nil)
+		payload = makePayload(
+			"queryLedgerState/utxo",
+			Map{"addresses": addresses},
+			nil,
+		)
 		content struct{ Result []shared.Utxo }
 	)
 
@@ -208,9 +229,16 @@ func (c *Client) UtxosByAddress(ctx context.Context, addresses ...string) ([]sha
 	return content.Result, nil
 }
 
-func (c *Client) UtxosByTxIn(ctx context.Context, txIns ...chainsync.TxInQuery) ([]shared.Utxo, error) {
+func (c *Client) UtxosByTxIn(
+	ctx context.Context,
+	txIns ...chainsync.TxInQuery,
+) ([]shared.Utxo, error) {
 	var (
-		payload = makePayload("queryLedgerState/utxo", Map{"outputReferences": txIns}, nil)
+		payload = makePayload(
+			"queryLedgerState/utxo",
+			Map{"outputReferences": txIns},
+			nil,
+		)
 		content struct{ Result []shared.Utxo }
 	)
 
@@ -236,11 +264,17 @@ type rewardAccountSummary struct {
 	Deposit  *shared.Value `json:"deposit,omitempty"`
 }
 
-func (c *Client) GetDelegation(ctx context.Context, rewardAddress string) (Delegation, error) {
+func (c *Client) GetDelegation(
+	ctx context.Context,
+	rewardAddress string,
+) (Delegation, error) {
 
 	_, data, err := bech32.Decode(rewardAddress)
 	if err != nil {
-		return Delegation{}, fmt.Errorf("failed to decode reward address: %w", err)
+		return Delegation{}, fmt.Errorf(
+			"failed to decode reward address: %w",
+			err,
+		)
 	}
 
 	decoded_value, _ := bech32.ConvertBits(data, 5, 8, false)
@@ -248,22 +282,39 @@ func (c *Client) GetDelegation(ctx context.Context, rewardAddress string) (Deleg
 	rewardAddressVfk := hex.EncodeToString(decoded_value[1:])
 
 	var (
-		payload = makePayload("queryLedgerState/rewardAccountSummaries", Map{"keys": []string{rewardAddress}}, nil)
+		payload = makePayload(
+			"queryLedgerState/rewardAccountSummaries",
+			Map{"keys": []string{rewardAddress}},
+			nil,
+		)
 		content struct {
 			Result map[string]*rewardAccountSummary
 		}
 	)
 
 	if err := c.query(ctx, payload, &content); err != nil {
-		return Delegation{}, fmt.Errorf("failed to query reward account summaries: %w", err)
+		return Delegation{}, fmt.Errorf(
+			"failed to query reward account summaries: %w",
+			err,
+		)
 	}
 
 	summary, ok := content.Result[rewardAddressVfk]
 	if !ok || summary == nil {
 		if !ok {
-			return Delegation{Rewards: num.Int64(0)}, fmt.Errorf("reward account not found for reward address vfk: %s", rewardAddressVfk)
+			return Delegation{
+					Rewards: num.Int64(0),
+				}, fmt.Errorf(
+					"reward account not found for reward address vfk: %s",
+					rewardAddressVfk,
+				)
 		}
-		return Delegation{Rewards: num.Int64(0)}, fmt.Errorf("query returned nil reward account for reward address: %s", rewardAddress)
+		return Delegation{
+				Rewards: num.Int64(0),
+			}, fmt.Errorf(
+				"query returned nil reward account for reward address: %s",
+				rewardAddress,
+			)
 	}
 
 	delegation := Delegation{

@@ -117,7 +117,11 @@ func WithStore(store Store) ChainSyncOption {
 // ChainSync replays the blockchain by invoking the callback for each block
 // By default, ChainSync stores no checkpoints and always restarts from origin.  These can
 // be overridden via WithPoints and WithStore
-func (c *Client) ChainSync(ctx context.Context, callback ChainSyncFunc, opts ...ChainSyncOption) (*ChainSync, error) {
+func (c *Client) ChainSync(
+	ctx context.Context,
+	callback ChainSyncFunc,
+	opts ...ChainSyncOption,
+) (*ChainSync, error) {
 	options := buildChainSyncOptions(opts...)
 
 	done := make(chan struct{})
@@ -135,7 +139,8 @@ func (c *Client) ChainSync(ctx context.Context, callback ChainSyncFunc, opts ...
 			err = c.doChainSync(ctx, callback, options)
 			if err != nil && isTemporaryError(err) {
 				if options.reconnect {
-					c.options.logger.Info("websocket connection error: will retry",
+					c.options.logger.Info(
+						"websocket connection error: will retry",
 						KV("delay", timeout.Round(time.Millisecond).String()),
 						KV("err", err.Error()),
 					)
@@ -162,10 +167,18 @@ func (c *Client) ChainSync(ctx context.Context, callback ChainSyncFunc, opts ...
 	}, nil
 }
 
-func (c *Client) doChainSync(ctx context.Context, callback ChainSyncFunc, options ChainSyncOptions) error {
+func (c *Client) doChainSync(
+	ctx context.Context,
+	callback ChainSyncFunc,
+	options ChainSyncOptions,
+) error {
 	conn, _, err := websocket.DefaultDialer.Dial(c.options.endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("failed to connect to ogmios, %v: %w", c.options.endpoint, err)
+		return fmt.Errorf(
+			"failed to connect to ogmios, %v: %w",
+			c.options.endpoint,
+			err,
+		)
 	}
 
 	init, err := getInit(ctx, options.store, options.points...)
@@ -272,7 +285,10 @@ func (c *Client) doChainSync(ctx context.Context, callback ChainSyncFunc, option
 
 			case websocket.PingMessage:
 				if err := conn.WriteMessage(websocket.PongMessage, nil); err != nil {
-					return fmt.Errorf("failed to respond with pong to ogmios: %w", err)
+					return fmt.Errorf(
+						"failed to respond with pong to ogmios: %w",
+						err,
+					)
 				}
 				continue
 
@@ -313,7 +329,11 @@ func (c *Client) doChainSync(ctx context.Context, callback ChainSyncFunc, option
 	return group.Wait()
 }
 
-func getInit(ctx context.Context, store Store, pp ...chainsync.Point) (data []byte, err error) {
+func getInit(
+	ctx context.Context,
+	store Store,
+	pp ...chainsync.Point,
+) (data []byte, err error) {
 	points, err := store.Load(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve points from store: %w", err)
@@ -366,7 +386,8 @@ func getPoint(data ...[]byte) (chainsync.Point, bool) {
 // isTemporaryError returns true if the error is recoverable
 func isTemporaryError(err error) bool {
 	wce := &websocket.CloseError{}
-	if ok := errors.As(err, &wce); ok && wce.Code == websocket.CloseAbnormalClosure {
+	if ok := errors.As(err, &wce); ok &&
+		wce.Code == websocket.CloseAbnormalClosure {
 		return true
 	}
 

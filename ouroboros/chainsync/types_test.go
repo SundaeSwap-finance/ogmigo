@@ -36,7 +36,10 @@ import (
 const TestDatumKey = 918273
 
 func TestUnmarshal(t *testing.T) {
-	err := filepath.Walk("../../ext/ogmios/server/test/vectors/NextBlockResponse", assertStructMatchesSchema(t))
+	err := filepath.Walk(
+		"../../ext/ogmios/server/test/vectors/NextBlockResponse",
+		assertStructMatchesSchema(t),
+	)
 	if err != nil {
 		t.Fatalf("got %v; want nil", err)
 	}
@@ -65,7 +68,11 @@ func assertStructMatchesSchema(t *testing.T) filepath.WalkFunc {
 		decoder.DisallowUnknownFields()
 		err = decoder.Decode(&ResponsePraos{})
 		if err != nil {
-			t.Fatalf("got %v; want nil: %v", err, fmt.Sprintf("struct did not match schema for file, %v", path))
+			t.Fatalf(
+				"got %v; want nil: %v",
+				err,
+				fmt.Sprintf("struct did not match schema for file, %v", path),
+			)
 		}
 
 		return nil
@@ -74,7 +81,10 @@ func assertStructMatchesSchema(t *testing.T) filepath.WalkFunc {
 
 func TestDynamodbSerialize(t *testing.T) {
 	t.SkipNow()
-	err := filepath.Walk("../../ext/ogmios/server/test/vectors/NextBlockResponse", assertDynamoDBSerialize(t))
+	err := filepath.Walk(
+		"../../ext/ogmios/server/test/vectors/NextBlockResponse",
+		assertDynamoDBSerialize(t),
+	)
 	assert.Nil(t, err)
 }
 
@@ -116,7 +126,10 @@ func assertDynamoDBSerialize(t *testing.T) filepath.WalkFunc {
 			opts := jsondiff.DefaultConsoleOptions()
 			diff, s := jsondiff.Compare(w, g, &opts)
 
-			if got, want := diff, jsondiff.FullMatch; !reflect.DeepEqual(got, want) {
+			if got, want := diff, jsondiff.FullMatch; !reflect.DeepEqual(
+				got,
+				want,
+			) {
 				fmt.Println(s)
 				assert.EqualValues(t, got, want, "JSON Diff is not full match")
 			}
@@ -279,7 +292,10 @@ func TestPoint_JSON(t *testing.T) {
 		if err != nil {
 			t.Fatalf("got %v; want nil", err)
 		}
-		if got, want := point.PointType(), PointTypeStruct; !reflect.DeepEqual(got, want) {
+		if got, want := point.PointType(), PointTypeStruct; !reflect.DeepEqual(
+			got,
+			want,
+		) {
 			t.Fatalf("got %v; want %v", got, want)
 		}
 
@@ -1427,7 +1443,11 @@ func Test_ParseOgmiosMetadataMapV6(t *testing.T) {
 	err := json.Unmarshal(meta, &o)
 	assert.Nil(t, err)
 	labels := *(o.Labels)
-	assert.Equal(t, 0, big.NewInt(1).Cmp(labels[TestDatumKey].Json.MapField[0].Key.IntField))
+	assert.Equal(
+		t,
+		0,
+		big.NewInt(1).Cmp(labels[TestDatumKey].Json.MapField[0].Key.IntField),
+	)
 }
 
 func Test_GetZapDatumBytesV6(t *testing.T) {
@@ -1477,7 +1497,9 @@ func Test_GetZapDatumBytesV6(t *testing.T) {
 }
 
 func Test_UnmarshalOgmiosMetadataV6(t *testing.T) {
-	meta := json.RawMessage(`{"674":{"map":[{"k":{"string":"msg"},"v":{"list":[{"string":"MuesliSwap Place Order"}]}}]},"1000":{"bytes":"01046034bf780d7e1a39a6ea628c54d70744664111947bfa319072b92d14f063133083b727c9f1b2e83c899982cc66da7aafd748e02206b849"},"1002":{"string":""},"1003":{"string":""},"1004":{"int":-949318},"1005":{"int":2650000},"1007":{"int":1},"1008":{"string":"547ceed647f57e64dc40a29b16be4f36b0d38b5aa3cd7afb286fc094"},"1009":{"string":"6262486f736b79"}}`)
+	meta := json.RawMessage(
+		`{"674":{"map":[{"k":{"string":"msg"},"v":{"list":[{"string":"MuesliSwap Place Order"}]}}]},"1000":{"bytes":"01046034bf780d7e1a39a6ea628c54d70744664111947bfa319072b92d14f063133083b727c9f1b2e83c899982cc66da7aafd748e02206b849"},"1002":{"string":""},"1003":{"string":""},"1004":{"int":-949318},"1005":{"int":2650000},"1007":{"int":1},"1008":{"string":"547ceed647f57e64dc40a29b16be4f36b0d38b5aa3cd7afb286fc094"},"1009":{"string":"6262486f736b79"}}`,
+	)
 	var o OgmiosAuxiliaryDataLabelsV6
 	err := json.Unmarshal(meta, &o)
 	assert.Nil(t, err)

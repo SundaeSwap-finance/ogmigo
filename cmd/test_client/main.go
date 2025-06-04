@@ -26,7 +26,10 @@ func main() {
 
 		switch response.Method {
 		case chainsync.FindIntersectionMethod, chainsync.FindIntersectMethod:
-			fmt.Printf("CompatibleResultFindIntersection - %v\n", response.Result)
+			fmt.Printf(
+				"CompatibleResultFindIntersection - %v\n",
+				response.Result,
+			)
 		case chainsync.NextBlockMethod, chainsync.RequestNextMethod:
 			fmt.Printf("CompatibleResultNextBlock - %v\n", response.Result)
 		default:
@@ -86,7 +89,11 @@ func main() {
 		return
 	}
 	if *debugPtr {
-		fmt.Printf("GOT THE ERA SUMMARIES - %v - %v\n", summaries.Summaries[len(summaries.Summaries)-1].Start.Slot, summaries.Summaries[len(summaries.Summaries)-1].End.Slot)
+		fmt.Printf(
+			"GOT THE ERA SUMMARIES - %v - %v\n",
+			summaries.Summaries[len(summaries.Summaries)-1].Start.Slot,
+			summaries.Summaries[len(summaries.Summaries)-1].End.Slot,
+		)
 	}
 
 	start, err := my_client.EraStart(ctx)

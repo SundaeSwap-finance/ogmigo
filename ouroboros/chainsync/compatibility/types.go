@@ -43,7 +43,8 @@ func (c *CompatibleResultFindIntersection) UnmarshalJSON(data []byte) error {
 
 	var r5 v5.ResultFindIntersectionV5
 	err2 := json.Unmarshal(data, &r5)
-	if err2 == nil && (r5.IntersectionFound != nil || r5.IntersectionNotFound != nil) {
+	if err2 == nil &&
+		(r5.IntersectionFound != nil || r5.IntersectionNotFound != nil) {
 		*c = CompatibleResultFindIntersection(r5.ConvertToV6())
 		return nil
 	} else {
@@ -80,7 +81,9 @@ func (c CompatibleResultFindIntersection) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&five)
 }
 
-func (c *CompatibleResultFindIntersection) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleResultFindIntersection) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var s chainsync.ResultFindIntersectionPraos
 	err := dynamodbattribute.Unmarshal(item, &s)
 	if err == nil && s.Intersection != nil {
@@ -98,7 +101,9 @@ func (c *CompatibleResultFindIntersection) UnmarshalDynamoDBAttributeValue(item 
 	}
 }
 
-func (c CompatibleResultFindIntersection) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleResultFindIntersection) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	six := chainsync.ResultFindIntersectionPraos(c)
 	five := v5.ResultFindIntersectionFromV6(six)
 	av, err := dynamodbattribute.Marshal(&five)
@@ -110,7 +115,13 @@ func (c CompatibleResultFindIntersection) MarshalDynamoDBAttributeValue(item *dy
 }
 
 func (c CompatibleResultFindIntersection) String() string {
-	return fmt.Sprintf("intersection=[%v] tip=[%v] error=[%v] id=[%v]", c.Intersection, c.Tip, c.Error, c.ID)
+	return fmt.Sprintf(
+		"intersection=[%v] tip=[%v] error=[%v] id=[%v]",
+		c.Intersection,
+		c.Tip,
+		c.Error,
+		c.ID,
+	)
 }
 
 // Support nextBlock (v6) / RequestNext (v5) universally.
@@ -141,7 +152,9 @@ func (c CompatibleResultNextBlock) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&five)
 }
 
-func (c *CompatibleResultNextBlock) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleResultNextBlock) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var s chainsync.ResultNextBlockPraos
 	err := dynamodbattribute.Unmarshal(item, &s)
 	if err == nil && s.Direction != "" {
@@ -159,7 +172,9 @@ func (c *CompatibleResultNextBlock) UnmarshalDynamoDBAttributeValue(item *dynamo
 	}
 }
 
-func (c CompatibleResultNextBlock) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleResultNextBlock) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	six := chainsync.ResultNextBlockPraos(c)
 	five := v5.ResultNextBlockFromV6(six)
 	av, err := dynamodbattribute.Marshal(&five)
@@ -171,7 +186,13 @@ func (c CompatibleResultNextBlock) MarshalDynamoDBAttributeValue(item *dynamodb.
 }
 
 func (c CompatibleResultNextBlock) String() string {
-	return fmt.Sprintf("direction=[%v] tip=[%v] block=[%v] point=[%v]", c.Direction, c.Tip, c.Block, c.Point)
+	return fmt.Sprintf(
+		"direction=[%v] tip=[%v] block=[%v] point=[%v]",
+		c.Direction,
+		c.Tip,
+		c.Block,
+		c.Point,
+	)
 }
 
 // Frontend for converting v5 JSON responses to v6.
@@ -201,7 +222,9 @@ func (c CompatibleResponsePraos) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v5.ResponseFromV6(six))
 }
 
-func (c *CompatibleResponsePraos) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleResponsePraos) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var s chainsync.ResponsePraos
 	if err := dynamodbattribute.Unmarshal(item, &s); err != nil {
 		var v v5.ResponseV5
@@ -215,7 +238,9 @@ func (c *CompatibleResponsePraos) UnmarshalDynamoDBAttributeValue(item *dynamodb
 	return nil
 }
 
-func (c CompatibleResponsePraos) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleResponsePraos) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	six := chainsync.ResponsePraos(c)
 	five := v5.ResponseFromV6(six)
 	av, err := dynamodbattribute.Marshal(&five)
@@ -228,7 +253,12 @@ func (c CompatibleResponsePraos) MarshalDynamoDBAttributeValue(item *dynamodb.At
 
 func (r CompatibleResponsePraos) MustFindIntersectResult() CompatibleResultFindIntersection {
 	if r.Method != chainsync.FindIntersectionMethod {
-		panic(fmt.Errorf("must only use *Must* methods after switching on the findIntersection method; called on %v", r.Method))
+		panic(
+			fmt.Errorf(
+				"must only use *Must* methods after switching on the findIntersection method; called on %v",
+				r.Method,
+			),
+		)
 	}
 	t, ok := r.Result.(chainsync.ResultFindIntersectionPraos)
 	if ok {
@@ -243,7 +273,12 @@ func (r CompatibleResponsePraos) MustFindIntersectResult() CompatibleResultFindI
 
 func (r CompatibleResponsePraos) MustNextBlockResult() CompatibleResultNextBlock {
 	if r.Method != chainsync.NextBlockMethod {
-		panic(fmt.Errorf("must only use *Must* methods after switching on the nextBlock method; called on %v", r.Method))
+		panic(
+			fmt.Errorf(
+				"must only use *Must* methods after switching on the nextBlock method; called on %v",
+				r.Method,
+			),
+		)
 	}
 	t, ok := r.Result.(chainsync.ResultNextBlockPraos)
 	if ok {
@@ -289,7 +324,9 @@ func (c CompatibleValue) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&s)
 }
 
-func (c *CompatibleValue) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleValue) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var s shared.Value
 	if err := dynamodbattribute.Unmarshal(item, &s); err != nil {
 		var v v5.ValueV5
@@ -303,7 +340,9 @@ func (c *CompatibleValue) UnmarshalDynamoDBAttributeValue(item *dynamodb.Attribu
 	return nil
 }
 
-func (c CompatibleValue) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleValue) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	s := v5.ValueFromV6(shared.Value(c))
 	av, err := dynamodbattribute.Marshal(&s)
 	if err != nil {
@@ -336,7 +375,11 @@ func (c *CompatibleResult) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	return fmt.Errorf("unable to find an appropriate result: '%w'; '%w'", err1, err2)
+	return fmt.Errorf(
+		"unable to find an appropriate result: '%w'; '%w'",
+		err1,
+		err2,
+	)
 }
 
 func (c CompatibleResult) MarshalJSON() ([]byte, error) {
@@ -349,7 +392,9 @@ func (c CompatibleResult) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("unable to marshal empty result")
 }
 
-func (c *CompatibleResult) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleResult) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var rfi CompatibleResultFindIntersection
 	r := CompatibleResult{}
 	if err := dynamodbattribute.Unmarshal(item, &rfi); err != nil {
@@ -366,7 +411,9 @@ func (c *CompatibleResult) UnmarshalDynamoDBAttributeValue(item *dynamodb.Attrib
 	return nil
 }
 
-func (c CompatibleResult) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleResult) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	if c.NextBlock != nil {
 		return c.NextBlock.MarshalDynamoDBAttributeValue(item)
 	}
@@ -408,7 +455,9 @@ func (c CompatibleTx) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&five)
 }
 
-func (c *CompatibleTx) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleTx) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var tx chainsync.Tx
 	err := dynamodbattribute.Unmarshal(item, &tx)
 	// We check spends here, as that key is distinct from the other result types.
@@ -427,7 +476,9 @@ func (c *CompatibleTx) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeV
 	}
 }
 
-func (c CompatibleTx) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleTx) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	f := v5.TxFromV6(chainsync.Tx(c))
 
 	av, err := dynamodbattribute.Marshal(&f)
@@ -469,7 +520,9 @@ func (to CompatibleTxOut) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&five)
 }
 
-func (to *CompatibleTxOut) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (to *CompatibleTxOut) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var txOut chainsync.TxOut
 	err := dynamodbattribute.Unmarshal(item, &txOut)
 	// We check spends here, as that key is distinct from the other result types.
@@ -488,7 +541,9 @@ func (to *CompatibleTxOut) UnmarshalDynamoDBAttributeValue(item *dynamodb.Attrib
 	}
 }
 
-func (to CompatibleTxOut) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (to CompatibleTxOut) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	f := v5.TxOutFromV6(chainsync.TxOut(to))
 
 	av, err := dynamodbattribute.Marshal(&f)
@@ -501,7 +556,10 @@ func (to CompatibleTxOut) MarshalDynamoDBAttributeValue(item *dynamodb.Attribute
 
 type CompatibleOgmiosAuxiliaryData chainsync.OgmiosAuxiliaryDataV6
 
-func GetMetadataDatums(txMetadata json.RawMessage, metadataDatumKey int) ([][]byte, error) {
+func GetMetadataDatums(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) ([][]byte, error) {
 	datums, err := GetMetadataDatumMap(txMetadata, metadataDatumKey)
 	if err != nil {
 		return nil, err
@@ -509,7 +567,10 @@ func GetMetadataDatums(txMetadata json.RawMessage, metadataDatumKey int) ([][]by
 	return chainsync.GetMetadataDatums(datums)
 }
 
-func GetMetadataDatumMap(txMetadata json.RawMessage, metadataDatumKey int) (map[string][]byte, error) {
+func GetMetadataDatumMap(
+	txMetadata json.RawMessage,
+	metadataDatumKey int,
+) (map[string][]byte, error) {
 	if txMetadata == nil {
 		return map[string][]byte{}, nil
 	}
@@ -535,7 +596,11 @@ func GetMetadataDatumMap(txMetadata json.RawMessage, metadataDatumKey int) (map[
 		return nil, nil
 	}
 	if dats.Json == nil {
-		return nil, fmt.Errorf("transaction metadata at key '%d' is missing a json representation: '%v' (is ogmios running with --metadata-detailed-schema?)", metadataDatumKey, string(txMetadata))
+		return nil, fmt.Errorf(
+			"transaction metadata at key '%d' is missing a json representation: '%v' (is ogmios running with --metadata-detailed-schema?)",
+			metadataDatumKey,
+			string(txMetadata),
+		)
 	}
 	return chainsync.ReconstructDatums(*(dats.Json))
 }
@@ -571,7 +636,9 @@ func (c CompatibleOgmiosAuxiliaryData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&five)
 }
 
-func (c *CompatibleOgmiosAuxiliaryData) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c *CompatibleOgmiosAuxiliaryData) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	var metadata chainsync.OgmiosAuxiliaryDataV6
 	err := dynamodbattribute.Unmarshal(item, &metadata)
 	// We check spends here, as that key is distinct from the other result types.
@@ -590,7 +657,9 @@ func (c *CompatibleOgmiosAuxiliaryData) UnmarshalDynamoDBAttributeValue(item *dy
 	}
 }
 
-func (c CompatibleOgmiosAuxiliaryData) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (c CompatibleOgmiosAuxiliaryData) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	f, err := v5.OgmiosAuxiliaryDataFromV6(chainsync.OgmiosAuxiliaryDataV6(c))
 	if err != nil {
 		return err

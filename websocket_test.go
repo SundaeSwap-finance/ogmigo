@@ -66,7 +66,10 @@ func TestClient_query(t *testing.T) {
 
 	client := New(WithEndpoint(fmt.Sprintf("ws://127.0.0.1:%v", port)))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		250*time.Millisecond,
+	)
 	defer cancel()
 
 	_, err = client.SubmitTx(ctx, "fffefdfc")

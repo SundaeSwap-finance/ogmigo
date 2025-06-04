@@ -73,7 +73,9 @@ func (i Int) Uint64() uint64 {
 	return i.BigInt().Uint64()
 }
 
-func (i Int) MarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (i Int) MarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	item.N = aws.String(i.BigInt().String())
 	return nil
 }
@@ -114,7 +116,9 @@ func (i Int) Equal(that Int) bool {
 	return i.BigInt().Cmp(that.BigInt()) == 0
 }
 
-func (i *Int) UnmarshalDynamoDBAttributeValue(item *dynamodb.AttributeValue) error {
+func (i *Int) UnmarshalDynamoDBAttributeValue(
+	item *dynamodb.AttributeValue,
+) error {
 	if aws.BoolValue(item.NULL) {
 		return nil
 	}

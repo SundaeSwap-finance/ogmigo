@@ -36,7 +36,11 @@ type EvaluateTx struct {
 	Cbor string `json:"cbor"`
 }
 
-func (c *Client) evaluateTx(ctx context.Context, data string, additionalUtxos []shared.Utxo) (response *EvaluateTxResponse, err error) {
+func (c *Client) evaluateTx(
+	ctx context.Context,
+	data string,
+	additionalUtxos []shared.Utxo,
+) (response *EvaluateTxResponse, err error) {
 	tx := EvaluateTx{
 		Cbor: data,
 	}
@@ -62,11 +66,18 @@ func (c *Client) evaluateTx(ctx context.Context, data string, additionalUtxos []
 // EvaluateTx measures the script execution costs of a transaction.
 // https://ogmios.dev/mini-protocols/local-tx-submission/
 // https://github.com/CardanoSolutions/ogmios/blob/v6.0/docs/content/mini-protocols/local-tx-submission.md
-func (c *Client) EvaluateTx(ctx context.Context, data string) (response *EvaluateTxResponse, err error) {
+func (c *Client) EvaluateTx(
+	ctx context.Context,
+	data string,
+) (response *EvaluateTxResponse, err error) {
 	return c.evaluateTx(ctx, data, nil)
 }
 
-func (c *Client) EvaluateTxWithAdditionalUtxos(ctx context.Context, data string, additionalUtxos []shared.Utxo) (response *EvaluateTxResponse, err error) {
+func (c *Client) EvaluateTxWithAdditionalUtxos(
+	ctx context.Context,
+	data string,
+	additionalUtxos []shared.Utxo,
+) (response *EvaluateTxResponse, err error) {
 	return c.evaluateTx(ctx, data, additionalUtxos)
 }
 
@@ -100,7 +111,11 @@ func readEvaluateTx(data []byte) (r *EvaluateTxResponse, err error) {
 	e, err1 := readEvaluateTxError(data)
 	u, err2 := readEvaluateTxResult(data)
 	if err1 != nil && err2 != nil {
-		return nil, fmt.Errorf("could not parse evaluate tx response; neither error (%w) nor result (%w)", err1, err2)
+		return nil, fmt.Errorf(
+			"could not parse evaluate tx response; neither error (%w) nor result (%w)",
+			err1,
+			err2,
+		)
 	}
 	if err1 == nil {
 		return &EvaluateTxResponse{Error: e}, nil
@@ -108,17 +123,28 @@ func readEvaluateTx(data []byte) (r *EvaluateTxResponse, err error) {
 	if err2 == nil {
 		return &EvaluateTxResponse{ExUnits: u}, nil
 	}
-	return nil, fmt.Errorf("could not parse evaluate tx response: %s", string(data))
+	return nil, fmt.Errorf(
+		"could not parse evaluate tx response: %s",
+		string(data),
+	)
 }
 
 func readEvaluateTxError(data []byte) (*EvaluateTxError, error) {
 	value, _, _, err := jsonparser.Get(data, "error")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse EvaluateTx error: %w %s", err, data)
+		return nil, fmt.Errorf(
+			"failed to parse EvaluateTx error: %w %s",
+			err,
+			data,
+		)
 	}
 	var e EvaluateTxError
 	if err := json.Unmarshal(value, &e); err != nil {
-		return nil, fmt.Errorf("failed to parse EvaluateTx error: %w %s", err, data)
+		return nil, fmt.Errorf(
+			"failed to parse EvaluateTx error: %w %s",
+			err,
+			data,
+		)
 	}
 	return &e, nil
 }
@@ -126,14 +152,21 @@ func readEvaluateTxError(data []byte) (*EvaluateTxError, error) {
 func readEvaluateTxResult(data []byte) ([]ExUnits, error) {
 	value, dataType, _, err := jsonparser.Get(data, "result")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse EvaluateTx response: %w %s", err, string(data))
+		return nil, fmt.Errorf(
+			"failed to parse EvaluateTx response: %w %s",
+			err,
+			string(data),
+		)
 	}
 
 	switch dataType {
 	case jsonparser.Array:
 		var results []ExUnits
 		if err := json.Unmarshal(value, &results); err != nil {
-			return nil, fmt.Errorf("failed to parse EvaluateTx response: %w", err)
+			return nil, fmt.Errorf(
+				"failed to parse EvaluateTx response: %w",
+				err,
+			)
 		}
 		return results, nil
 	default:

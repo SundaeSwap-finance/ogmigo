@@ -150,7 +150,10 @@ func TestClient_UtxosByAddress(t *testing.T) {
 
 	ctx := context.Background()
 	client := New(WithEndpoint(endpoint), WithLogger(DefaultLogger))
-	utxos, err := client.UtxosByAddress(ctx, "addr_test1qz6m03tdfm5raxr00fsw7p8v79ptfveaptar9a56zqz09kqkazwhq98h9v8gnk3wm5uvevzvd642zm7778afv0evwqgqfuy84f")
+	utxos, err := client.UtxosByAddress(
+		ctx,
+		"addr_test1qz6m03tdfm5raxr00fsw7p8v79ptfveaptar9a56zqz09kqkazwhq98h9v8gnk3wm5uvevzvd642zm7778afv0evwqgqfuy84f",
+	)
 	if err != nil {
 		t.Fatalf("got %#v; want nil", err)
 	}

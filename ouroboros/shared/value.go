@@ -64,7 +64,13 @@ func Enough(have Value, want Value) (bool, error) {
 				haveAmt = haveAssets[assetName]
 			}
 			if haveAmt.LessThan(amt) {
-				return false, fmt.Errorf("not enough %v (%v) to meet demand (%v): %w", assetName, have[policyId][assetName].String(), amt, ErrInsufficientFunds)
+				return false, fmt.Errorf(
+					"not enough %v (%v) to meet demand (%v): %w",
+					assetName,
+					have[policyId][assetName].String(),
+					amt,
+					ErrInsufficientFunds,
+				)
 			}
 		}
 	}

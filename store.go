@@ -61,5 +61,10 @@ func (l *loggingStore) Load(_ context.Context) (chainsync.Points, error) {
 
 type nopStore struct{}
 
-func (n nopStore) Save(context.Context, chainsync.Point) error    { return nil }
-func (n nopStore) Load(context.Context) (chainsync.Points, error) { return nil, nil }
+func (n nopStore) Save(context.Context, chainsync.Point) error { return nil }
+
+func (n nopStore) Load(
+	context.Context,
+) (chainsync.Points, error) {
+	return nil, nil
+}

@@ -48,16 +48,44 @@ func TestV5(t *testing.T) {
 		bootstrap := "{\"key\":\"d88f6028cc3d6d335115de3737bc2fe80a9a57a21a2c7c228ebc33b222e0897b\",\"signature\":\"/rRH7Ka4GfiLS2qsgalyABId1EUb/Mtl9z0x3ilrVALurUKEiAhjOtHUr7+tOi8ZZ85lUWrcpc03NnP3WKnAlg==\",\"chainCode\":\"12340000\",\"addressAttributes\":\"Lw==\"}"
 		assert.Equal(t, "2f", expectedV6.Signatories[0].AddressAttributes)
 		assert.Equal(t, "12340000", expectedV6.Signatories[0].ChainCode)
-		assert.Equal(t, "d88f6028cc3d6d335115de3737bc2fe80a9a57a21a2c7c228ebc33b222e0897b", expectedV6.Signatories[0].Key)
-		assert.Equal(t, "feb447eca6b819f88b4b6aac81a97200121dd4451bfccb65f73d31de296b5402eead42848808633ad1d4afbfad3a2f1967ce65516adca5cd373673f758a9c096", expectedV6.Signatories[0].Signature)
+		assert.Equal(
+			t,
+			"d88f6028cc3d6d335115de3737bc2fe80a9a57a21a2c7c228ebc33b222e0897b",
+			expectedV6.Signatories[0].Key,
+		)
+		assert.Equal(
+			t,
+			"feb447eca6b819f88b4b6aac81a97200121dd4451bfccb65f73d31de296b5402eead42848808633ad1d4afbfad3a2f1967ce65516adca5cd373673f758a9c096",
+			expectedV6.Signatories[0].Signature,
+		)
 		assert.Equal(t, bootstrap, string(v5Conversion.Witness.Bootstrap[0]))
-		assert.Equal(t, "IFb1lTq+ivhYQz6fAoPZQXuGgebeh5fIsM8rocK03mbss8yaUQpf871Qso2aAYaxjDadDHzMfUPRCJDpTyVxQg==", v5Conversion.Witness.Signatures["400019217786c3630fb121c455065b879055aa0ced5076a24abe8d6c837e0318"])
+		assert.Equal(
+			t,
+			"IFb1lTq+ivhYQz6fAoPZQXuGgebeh5fIsM8rocK03mbss8yaUQpf871Qso2aAYaxjDadDHzMfUPRCJDpTyVxQg==",
+			v5Conversion.Witness.Signatures["400019217786c3630fb121c455065b879055aa0ced5076a24abe8d6c837e0318"],
+		)
 		assert.Equal(t, json.RawMessage(network), v5Conversion.Body.Network)
 		assert.Equal(t, json.RawMessage(network), v6Conversion.Network)
-		assert.Equal(t, expectedV6.Signatories[0].AddressAttributes, v6Conversion.Signatories[2].AddressAttributes)
-		assert.Equal(t, expectedV6.Signatories[0].ChainCode, v6Conversion.Signatories[2].ChainCode)
-		assert.Equal(t, expectedV6.Signatories[0].Key, v6Conversion.Signatories[2].Key)
-		assert.Equal(t, expectedV6.Signatories[0].Signature, v6Conversion.Signatories[2].Signature)
+		assert.Equal(
+			t,
+			expectedV6.Signatories[0].AddressAttributes,
+			v6Conversion.Signatories[2].AddressAttributes,
+		)
+		assert.Equal(
+			t,
+			expectedV6.Signatories[0].ChainCode,
+			v6Conversion.Signatories[2].ChainCode,
+		)
+		assert.Equal(
+			t,
+			expectedV6.Signatories[0].Key,
+			v6Conversion.Signatories[2].Key,
+		)
+		assert.Equal(
+			t,
+			expectedV6.Signatories[0].Signature,
+			v6Conversion.Signatories[2].Signature,
+		)
 	})
 }
 
@@ -107,7 +135,11 @@ func Test_ParseOgmiosMetadataMapV5(t *testing.T) {
 	var o OgmiosAuxiliaryDataV5
 	err := json.Unmarshal(meta, &o)
 	assert.Nil(t, err)
-	assert.Equal(t, 0, big.NewInt(1).Cmp(o.Body.Blob[TestDatumKey].MapField[0].Key.IntField))
+	assert.Equal(
+		t,
+		0,
+		big.NewInt(1).Cmp(o.Body.Blob[TestDatumKey].MapField[0].Key.IntField),
+	)
 }
 
 func Test_GetDatumBytesV5(t *testing.T) {
@@ -157,7 +189,9 @@ func Test_GetDatumBytesV5(t *testing.T) {
 }
 
 func Test_UnmarshalOgmiosMetadataV5(t *testing.T) {
-	meta := json.RawMessage(`{"674":{"map":[{"k":{"string":"msg"},"v":{"list":[{"string":"MuesliSwap Place Order"}]}}]},"1000":{"bytes":"01046034bf780d7e1a39a6ea628c54d70744664111947bfa319072b92d14f063133083b727c9f1b2e83c899982cc66da7aafd748e02206b849"},"1002":{"string":""},"1003":{"string":""},"1004":{"int":-949318},"1005":{"int":2650000},"1007":{"int":1},"1008":{"string":"547ceed647f57e64dc40a29b16be4f36b0d38b5aa3cd7afb286fc094"},"1009":{"string":"6262486f736b79"}}`)
+	meta := json.RawMessage(
+		`{"674":{"map":[{"k":{"string":"msg"},"v":{"list":[{"string":"MuesliSwap Place Order"}]}}]},"1000":{"bytes":"01046034bf780d7e1a39a6ea628c54d70744664111947bfa319072b92d14f063133083b727c9f1b2e83c899982cc66da7aafd748e02206b849"},"1002":{"string":""},"1003":{"string":""},"1004":{"int":-949318},"1005":{"int":2650000},"1007":{"int":1},"1008":{"string":"547ceed647f57e64dc40a29b16be4f36b0d38b5aa3cd7afb286fc094"},"1009":{"string":"6262486f736b79"}}`,
+	)
 	var o OgmiosMetadataV5
 	err := json.Unmarshal(meta, &o)
 	assert.Nil(t, err)

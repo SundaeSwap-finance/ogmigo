@@ -50,7 +50,9 @@ func TestClient_ChainSync(t *testing.T) {
 	client := New(WithEndpoint(endpoint))
 	var callback ChainSyncFunc = func(ctx context.Context, data []byte) error {
 		var response chainsync.ResponsePraos
-		decoder := json.NewDecoder(bytes.NewReader(data)) // use decoder to check for unknown fields
+		decoder := json.NewDecoder(
+			bytes.NewReader(data),
+		) // use decoder to check for unknown fields
 		decoder.DisallowUnknownFields()
 
 		err := decoder.Decode(&response)
@@ -66,7 +68,12 @@ func TestClient_ChainSync(t *testing.T) {
 			if nbr.Direction == chainsync.RollForwardString {
 				blockNo = nbr.Block.Height
 			}
-			log.Printf("read: block=%v, n=%v, read=%v", blockNo, p.Sprintf("%d", v), p.Sprintf("%d", read))
+			log.Printf(
+				"read: block=%v, n=%v, read=%v",
+				blockNo,
+				p.Sprintf("%d", v),
+				p.Sprintf("%d", read),
+			)
 		}
 
 		return nil
