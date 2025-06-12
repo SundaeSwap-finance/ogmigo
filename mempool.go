@@ -48,6 +48,12 @@ type MonitorMempoolOptions struct {
 	reconnect bool // reconnect to ogmios if connection drops
 }
 
+func WithMempoolReconnect(enabled bool) MonitorMempoolOption {
+	return func(opts *MonitorMempoolOptions) {
+		opts.reconnect = enabled
+	}
+}
+
 func buildMonitorMempoolOptions(
 	opts ...MonitorMempoolOption,
 ) MonitorMempoolOptions {
