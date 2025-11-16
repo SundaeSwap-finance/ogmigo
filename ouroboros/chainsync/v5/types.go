@@ -37,8 +37,8 @@ var bNil = []byte("nil")
 type TxV5 struct {
 	ID          string            `json:"id,omitempty"          dynamodbav:"id,omitempty"`
 	InputSource string            `json:"inputSource,omitempty" dynamodbav:"inputSource,omitempty"`
-	Body        TxBodyV5          `json:"body,omitempty"        dynamodbav:"body,omitempty"`
-	Witness     chainsync.Witness `json:"witness,omitempty"     dynamodbav:"witness,omitempty"`
+	Body        TxBodyV5          `json:"body"                  dynamodbav:"body,omitempty"`
+	Witness     chainsync.Witness `json:"witness"               dynamodbav:"witness,omitempty"`
 	Metadata    json.RawMessage   `json:"metadata,omitempty"    dynamodbav:"metadata,omitempty"`
 	// Raw serialized transaction, base64.
 	Raw string `json:"raw,omitempty"         dynamodbav:"raw,omitempty"`
@@ -232,7 +232,7 @@ func TxFromV6(t chainsync.Tx) TxV5 {
 type TxBodyV5 struct {
 	Certificates            []json.RawMessage  `json:"certificates,omitempty"            dynamodbav:"certificates,omitempty"`
 	Collaterals             TxInsV5            `json:"collaterals,omitempty"             dynamodbav:"collaterals,omitempty"`
-	Fee                     num.Int            `json:"fee,omitempty"                     dynamodbav:"fee,omitempty"`
+	Fee                     num.Int            `json:"fee"                               dynamodbav:"fee,omitempty"`
 	Inputs                  TxInsV5            `json:"inputs,omitempty"                  dynamodbav:"inputs,omitempty"`
 	Mint                    *ValueV5           `json:"mint,omitempty"                    dynamodbav:"mint,omitempty"`
 	Network                 json.RawMessage    `json:"network,omitempty"                 dynamodbav:"network,omitempty"`
@@ -294,7 +294,7 @@ type TxOutV5 struct {
 	Address   string          `json:"address,omitempty"   dynamodbav:"address,omitempty"`
 	Datum     string          `json:"datum,omitempty"     dynamodbav:"datum,omitempty"`
 	DatumHash string          `json:"datumHash,omitempty" dynamodbav:"datumHash,omitempty"`
-	Value     ValueV5         `json:"value,omitempty"     dynamodbav:"value,omitempty"`
+	Value     ValueV5         `json:"value"               dynamodbav:"value,omitempty"`
 	Script    json.RawMessage `json:"script,omitempty"    dynamodbav:"script,omitempty"`
 }
 
@@ -367,8 +367,8 @@ func ValidityIntervalFromV6(v chainsync.ValidityInterval) ValidityIntervalV5 {
 }
 
 type ValueV5 struct {
-	Coins  num.Int                    `json:"coins,omitempty" dynamodbav:"coins,omitempty"`
-	Assets map[shared.AssetID]num.Int `json:"assets"          dynamodbav:"assets,omitempty"`
+	Coins  num.Int                    `json:"coins"  dynamodbav:"coins,omitempty"`
+	Assets map[shared.AssetID]num.Int `json:"assets" dynamodbav:"assets,omitempty"`
 }
 
 func (v ValueV5) ConvertToV6() shared.Value {
@@ -425,7 +425,7 @@ func ValueFromV6(v shared.Value) ValueV5 {
 
 type BlockV5 struct {
 	Body       []TxV5        `json:"body,omitempty"       dynamodbav:"body,omitempty"`
-	Header     BlockHeaderV5 `json:"header,omitempty"     dynamodbav:"header,omitempty"`
+	Header     BlockHeaderV5 `json:"header"               dynamodbav:"header,omitempty"`
 	HeaderHash string        `json:"headerHash,omitempty" dynamodbav:"headerHash,omitempty"`
 }
 
@@ -714,8 +714,8 @@ func ResultFindIntersectionFromV6(
 }
 
 type RollBackwardV5 struct {
-	Point PointV5       `json:"point,omitempty" dynamodbav:"point,omitempty"`
-	Tip   PointStructV5 `json:"tip,omitempty"   dynamodbav:"tip,omitempty"`
+	Point PointV5       `json:"point" dynamodbav:"point,omitempty"`
+	Tip   PointStructV5 `json:"tip"   dynamodbav:"tip,omitempty"`
 }
 
 type RollForwardBlockV5 struct {
@@ -941,8 +941,8 @@ func BlockFromV6(b chainsync.Block) (RollForwardBlockV5, error) {
 }
 
 type RollForwardV5 struct {
-	Block RollForwardBlockV5 `json:"block,omitempty" dynamodbav:"block,omitempty"`
-	Tip   PointStructV5      `json:"tip,omitempty"   dynamodbav:"tip,omitempty"`
+	Block RollForwardBlockV5 `json:"block" dynamodbav:"block,omitempty"`
+	Tip   PointStructV5      `json:"tip"   dynamodbav:"tip,omitempty"`
 }
 
 type ResultNextBlockV5 struct {
