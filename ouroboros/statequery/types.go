@@ -5,9 +5,9 @@ import (
 )
 
 type EraStart struct {
-	Time  EraSeconds `json:"time,omitempty"`
-	Slot  big.Int    `json:"slot,omitempty"`
-	Epoch big.Int    `json:"epoch,omitempty"`
+	Time  EraSeconds `json:"time"`
+	Slot  big.Int    `json:"slot"`
+	Epoch big.Int    `json:"epoch"`
 }
 
 type EraSeconds struct {
