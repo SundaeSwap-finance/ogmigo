@@ -29,12 +29,12 @@ type ByronBlockBFT struct {
 	Ancestor                string             `json:"ancestor,omitempty"`
 	Height                  uint64             `json:"height,omitempty"`
 	Slot                    uint64             `json:"slot,omitempty"`
-	Size                    BlockSize          `json:"size,omitempty"`
+	Size                    BlockSize          `json:"size"`
 	Transactions            []Tx               `json:"transactions,omitempty"`
 	OperationalCertificates []json.RawMessage  `json:"operationalCertificates,omitempty"`
-	Protocol                ByronProtocol      `json:"protocol,omitempty"`
-	Issuer                  ByronBlockIssuer   `json:"issuer,omitempty"`
-	Delegate                ByronBlockDelegate `json:"delegate,omitempty"`
+	Protocol                ByronProtocol      `json:"protocol"`
+	Issuer                  ByronBlockIssuer   `json:"issuer"`
+	Delegate                ByronBlockDelegate `json:"delegate"`
 }
 
 // EBB Block Type
