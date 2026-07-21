@@ -24,11 +24,15 @@ import (
 )
 
 func TestStore_Load(t *testing.T) {
-	db, err := badger.Open(badger.DefaultOptions("test-db"))
+	db, err := badger.Open(badger.DefaultOptions(t.TempDir()))
 	if err != nil {
 		t.Fatalf("got %v; want nil", err)
 	}
-	defer db.Close()
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Fatalf("got %v; want nil", err)
+		}
+	})
 
 	var (
 		ctx   = context.Background()

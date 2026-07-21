@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strconv"
 	"sync/atomic"
+	"syscall"
 
 	"github.com/SundaeSwap-finance/ogmigo/v6"
 	"github.com/SundaeSwap-finance/ogmigo/v6/ouroboros/chainsync"
@@ -124,12 +125,10 @@ func action(_ *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	defer closer.Close()
-
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Kill, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	<-stop
 
-	return nil
+	return closer.Close()
 }
