@@ -21,7 +21,7 @@ import (
 )
 
 type Value struct {
-	Coins Int `json:"coins,omitempty"`
+	Coins Int `json:"coins"`
 }
 
 func TestDeserializeValue(t *testing.T) {

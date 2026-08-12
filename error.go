@@ -23,7 +23,7 @@ type Error struct {
 	Type        string `json:"type,omitempty"`
 	Version     string `json:"version,omitempty"`
 	ServiceName string `json:"servicename,omitempty"`
-	Fault       Fault  `json:"fault,omitempty"`
+	Fault       Fault  `json:"fault"`
 }
 
 // Error implements error interface

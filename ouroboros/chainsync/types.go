@@ -42,11 +42,11 @@ type Block struct {
 	Ancestor     string      `json:"ancestor,omitempty"`
 	Nonce        *Nonce      `json:"nonce,omitempty"`
 	Height       uint64      `json:"height,omitempty"`
-	Size         BlockSize   `json:"size,omitempty"`
+	Size         BlockSize   `json:"size"`
 	Slot         uint64      `json:"slot,omitempty"`
 	Transactions []Tx        `json:"transactions,omitempty"`
-	Protocol     Protocol    `json:"protocol,omitempty"`
-	Issuer       BlockIssuer `json:"issuer,omitempty"`
+	Protocol     Protocol    `json:"protocol"`
+	Issuer       BlockIssuer `json:"issuer"`
 }
 
 type Nonce struct {
@@ -59,19 +59,19 @@ type BlockSize struct {
 }
 
 type Protocol struct {
-	Version ProtocolVersion `json:"version,omitempty" dynamodbav:"version,omitempty"`
+	Version ProtocolVersion `json:"version" dynamodbav:"version,omitempty"`
 }
 
 type BlockIssuer struct {
 	VerificationKey        string       `json:"verificationKey,omitempty"`
 	VrfVerificationKey     string       `json:"vrfVerificationKey,omitempty"`
-	OperationalCertificate OpCert       `json:"operationalCertificate,omitempty"`
+	OperationalCertificate OpCert       `json:"operationalCertificate"`
 	LeaderValue            *LeaderValue `json:"leaderValue,omitempty"`
 }
 
 type OpCert struct {
 	Count uint64 `json:"count,omitempty"`
-	Kes   Kes    `json:"kes,omitempty"`
+	Kes   Kes    `json:"kes"`
 }
 
 type Kes struct {
@@ -316,8 +316,8 @@ type ProtocolVersion struct {
 
 type RollBackward struct {
 	Direction string            `json:"direction,omitempty" dynamodbav:"direction,omitempty"`
-	Tip       PointStruct       `json:"tip,omitempty"       dynamodbav:"tip,omitempty"`
-	Point     RollBackwardPoint `json:"point,omitempty"     dynamodbav:"point,omitempty"`
+	Tip       PointStruct       `json:"tip"                 dynamodbav:"tip,omitempty"`
+	Point     RollBackwardPoint `json:"point"               dynamodbav:"point,omitempty"`
 }
 
 type RollBackwardPoint struct {
@@ -328,8 +328,8 @@ type RollBackwardPoint struct {
 // Assume non-Byron blocks.
 type RollForward struct {
 	Direction string      `json:"direction,omitempty" dynamodbav:"direction,omitempty"`
-	Tip       PointStruct `json:"tip,omitempty"       dynamodbav:"tip,omitempty"`
-	Block     Block       `json:"block,omitempty"     dynamodbav:"block,omitempty"`
+	Tip       PointStruct `json:"tip"                 dynamodbav:"tip,omitempty"`
+	Block     Block       `json:"block"               dynamodbav:"block,omitempty"`
 }
 
 func (b Block) PointStruct() PointStruct {
