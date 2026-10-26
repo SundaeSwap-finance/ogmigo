@@ -36,6 +36,7 @@ type echoServer struct {
 	*httptest.Server
 	accepted atomic.Int64
 	open     atomic.Int64
+	received atomic.Int64
 
 	// delay, when set, is how long to wait before answering a request.
 	delay time.Duration
@@ -67,6 +68,7 @@ func newEchoServer(t *testing.T, configure func(*echoServer)) *echoServer {
 				if err != nil {
 					return
 				}
+				s.received.Add(1)
 				if s.delay > 0 {
 					time.Sleep(s.delay)
 				}
@@ -203,6 +205,34 @@ func TestQuery_poolDiscardsConnectionOfCancelledCall(t *testing.T) {
 	}
 }
 
+// A call whose context is already cancelled must not send its request, even
+// on a pooled connection that needs no dial; otherwise a cancelled SubmitTx
+// could still submit.
+func TestQuery_poolDoesNotSendWithCancelledContext(t *testing.T) {
+	server := newEchoServer(t, nil)
+	client := New(WithEndpoint(server.endpoint()), WithConnectionPool(1))
+	t.Cleanup(client.CloseIdleConnections)
+
+	if err := echoQuery(context.Background(), client, "a"); err != nil {
+		t.Fatalf("first query: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	err := echoQuery(ctx, client, "cancelled")
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("got %v; want context.Canceled", err)
+	}
+	if got := client.pool.idleCount(); got != 0 {
+		t.Fatalf("pool retains %d connections; want 0", got)
+	}
+	// Once the server has seen the connection close, it has read every
+	// request that was sent on it.
+	waitFor(t, func() bool { return server.open.Load() == 0 })
+	if got := server.received.Load(); got != 1 {
+		t.Fatalf("server received %d requests; want 1", got)
+	}
+}
+
 func TestQuery_poolRetriesConnectionClosedWhileIdle(t *testing.T) {
 	server := newEchoServer(t, func(s *echoServer) {
 		s.closeAfterReply = true
@@ -265,15 +295,19 @@ func TestQuery_poolDropsExpiredIdleConnection(t *testing.T) {
 	if err := echoQuery(context.Background(), client, "a"); err != nil {
 		t.Fatalf("first query: %v", err)
 	}
-	time.Sleep(30 * time.Millisecond)
+	// The idle connection is closed once it expires, without waiting for
+	// another call to notice.
+	waitFor(t, func() bool { return server.open.Load() == 0 })
+	if got := client.pool.idleCount(); got != 0 {
+		t.Fatalf("pool retains %d connections; want 0", got)
+	}
+
 	if err := echoQuery(context.Background(), client, "b"); err != nil {
 		t.Fatalf("second query: %v", err)
 	}
 	if got := server.accepted.Load(); got != 2 {
 		t.Fatalf("accepted %d connections; want 2", got)
 	}
-	// The expired connection is closed, not leaked.
-	waitFor(t, func() bool { return server.open.Load() == 1 })
 }
 
 func TestQuery_poolKeepsConnectionAfterFault(t *testing.T) {

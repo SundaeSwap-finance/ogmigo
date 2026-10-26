@@ -32,6 +32,9 @@ type connPool struct {
 	// idle is ordered oldest first; connections are reused newest first so
 	// the ones that go unused age out.
 	idle []idleConn
+	// timer closes expired connections when no call comes along to do it.
+	// It is pending whenever idle is not empty.
+	timer *time.Timer
 }
 
 type idleConn struct {
@@ -66,18 +69,45 @@ func (p *connPool) get() *websocket.Conn {
 // outstanding, no reply unread - to the pool, or closes it if the pool is
 // full.
 func (p *connPool) put(conn *websocket.Conn) {
-	now := time.Now()
 	p.mu.Lock()
+	// Taking the time under the lock keeps idle ordered oldest first.
+	now := time.Now()
 	expired := p.pruneLocked(now)
 	if len(p.idle) < p.maxIdle {
 		p.idle = append(p.idle, idleConn{conn: conn, since: now})
 		conn = nil
+		if len(p.idle) == 1 {
+			p.scheduleLocked(p.idleTimeout)
+		}
 	}
 	p.mu.Unlock()
 	closeAll(expired)
 	if conn != nil {
 		_ = conn.Close()
 	}
+}
+
+// expire closes the connections that have expired, and runs again when the
+// oldest remaining one is due to.
+func (p *connPool) expire() {
+	p.mu.Lock()
+	now := time.Now()
+	expired := p.pruneLocked(now)
+	if len(p.idle) > 0 {
+		p.scheduleLocked(p.idle[0].since.Add(p.idleTimeout).Sub(now))
+	}
+	p.mu.Unlock()
+	closeAll(expired)
+}
+
+// scheduleLocked arranges for expire to run after d. A run left over from
+// an earlier schedule is harmless: it finds nothing expired and reschedules.
+func (p *connPool) scheduleLocked(d time.Duration) {
+	if p.timer == nil {
+		p.timer = time.AfterFunc(d, p.expire)
+		return
+	}
+	p.timer.Reset(d)
 }
 
 // closeIdle closes every idle connection. Connections checked out at the

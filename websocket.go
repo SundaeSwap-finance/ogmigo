@@ -135,6 +135,12 @@ func roundTrip(
 		return nil, delivered, false, err
 	}
 
+	// AfterFunc closes conn on another goroutine, so it may not have run
+	// yet for a ctx that was already done; a pooled conn needs no dial to
+	// notice. Check before writing, so a cancelled call never sends.
+	if err := ctx.Err(); err != nil {
+		return fail(err)
+	}
 	if err := conn.WriteJSON(payload); err != nil {
 		return fail(fmt.Errorf("failed to submit request: %w", err))
 	}
