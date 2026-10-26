@@ -14,12 +14,16 @@
 
 package ogmigo
 
+import "time"
+
 // Options available to ogmios client
 type Options struct {
-	endpoint     string
-	logger       Logger
-	pipeline     int
-	saveInterval uint64
+	endpoint        string
+	logger          Logger
+	pipeline        int
+	saveInterval    uint64
+	poolSize        int
+	poolIdleTimeout time.Duration
 }
 
 // Option to cardano client
@@ -53,6 +57,36 @@ func WithPipeline(n int) Option {
 	}
 }
 
+// WithConnectionPool makes request/response calls (state queries, transaction
+// submission and evaluation) reuse WebSocket connections instead of dialing a
+// new one per call. Up to n idle connections are kept open between calls;
+// concurrent calls beyond that dial extra connections, which are closed once
+// the pool is full again. Each connection carries one call at a time. n <= 0
+// leaves pooling off, the default.
+//
+// A pooled client holds connections open after a call returns. Call
+// Client.CloseIdleConnections when the client is no longer needed.
+//
+// A call that fails because a reused connection had been closed while idle is
+// retried once on a new connection. Should the server have acted on the
+// request before the connection dropped, a retried SubmitTx reports the
+// node's rejection of the duplicate rather than the original hash.
+func WithConnectionPool(n int) Option {
+	return func(opts *Options) {
+		opts.poolSize = n
+	}
+}
+
+// WithPoolIdleTimeout sets how long a pooled connection may sit idle before
+// it is closed rather than reused; defaults to 30 seconds. Keep it below any
+// idle timeout of a proxy or load balancer in front of Ogmios. It has no
+// effect unless WithConnectionPool is also set.
+func WithPoolIdleTimeout(d time.Duration) Option {
+	return func(opts *Options) {
+		opts.poolIdleTimeout = d
+	}
+}
+
 func buildOptions(opts ...Option) Options {
 	var options Options
 	for _, opt := range opts {
@@ -69,6 +103,9 @@ func buildOptions(opts ...Option) Options {
 	}
 	if options.saveInterval <= 0 {
 		options.saveInterval = 2160
+	}
+	if options.poolIdleTimeout <= 0 {
+		options.poolIdleTimeout = 30 * time.Second
 	}
 	return options
 }
