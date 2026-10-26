@@ -34,6 +34,25 @@ func example(ctx context.Context) error {
 }
 ```
 
+### Connection reuse
+
+By default, each request/response call (state queries, `SubmitTx`,
+`EvaluateTx`) dials a new WebSocket connection and closes it afterwards.
+Clients that make frequent calls can keep connections open between calls
+instead:
+
+```go
+client := ogmigo.New(
+	ogmigo.WithEndpoint("ws://example.com:1337"),
+	ogmigo.WithConnectionPool(4), // keep up to 4 idle connections
+)
+defer client.CloseIdleConnections()
+```
+
+Each pooled connection carries one call at a time. Idle connections are
+closed after 30 seconds by default (`WithPoolIdleTimeout`). Chain sync and
+mempool monitoring are unaffected; they hold their own connections.
+
 ### Submodules
 
 `ogmigo` imports `ogmios` as a submodule for testing purposes. To fetch the submodules,
