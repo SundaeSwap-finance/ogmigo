@@ -285,6 +285,104 @@ func TestQuery_poolDoesNotRetryFreshConnection(t *testing.T) {
 	}
 }
 
+func TestSubmitTx_poolRetryPolicy(t *testing.T) {
+	for _, legacy := range []bool{false, true} {
+		name := "SubmitTx"
+		if legacy {
+			name = "SubmitTxV5"
+		}
+		for _, policy := range []struct {
+			name      string
+			options   []Option
+			wantRetry bool
+		}{
+			{name: "default"},
+			{name: "enabled", options: []Option{WithSubmissionRetries(true)}, wantRetry: true},
+			{name: "disabled", options: []Option{WithSubmissionRetries(true), WithSubmissionRetries(false)}},
+		} {
+			t.Run(name+"/"+policy.name, func(t *testing.T) {
+				var submissions atomic.Int64
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+					conn, err := (&websocket.Upgrader{}).Upgrade(w, req, nil)
+					if err != nil {
+						return
+					}
+					defer func() { _ = conn.Close() }()
+					for {
+						var payload Map
+						if conn.ReadJSON(&payload) != nil {
+							return
+						}
+						if payload["tag"] != nil {
+							if conn.WriteJSON(payload) != nil {
+								return
+							}
+							continue
+						}
+						if submissions.Add(1) == 1 {
+							// Acceptance can precede a lost response. A retry would
+							// replace the uncertain outcome with a duplicate rejection.
+							return
+						}
+						response := Map{
+							"jsonrpc": "2.0",
+							"error":   Map{"code": 3999, "message": "duplicate transaction"},
+						}
+						if legacy {
+							response = Map{"result": Map{"SubmitFail": []string{"duplicate transaction"}}}
+						}
+						_ = conn.WriteJSON(response)
+					}
+				}))
+				t.Cleanup(server.Close)
+				options := []Option{
+					WithEndpoint("ws" + strings.TrimPrefix(server.URL, "http")),
+					WithConnectionPool(1),
+				}
+				client := New(append(options, policy.options...)...)
+				t.Cleanup(client.CloseIdleConnections)
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				if err := echoQuery(ctx, client, "warm"); err != nil {
+					t.Fatalf("prime pool: %v", err)
+				}
+				var err error
+				if legacy {
+					err = client.SubmitTxV5(ctx, "00")
+				} else {
+					var response *SubmitTxResponse
+					response, err = client.SubmitTx(ctx, "00")
+					if policy.wantRetry && (response == nil || response.Error == nil || response.Error.Code != 3999) {
+						t.Fatalf("got response %+v, error %v; want duplicate rejection", response, err)
+					}
+				}
+				wantSubmissions := int64(1)
+				if policy.wantRetry {
+					wantSubmissions = 2
+				}
+				if got := submissions.Load(); got != wantSubmissions {
+					t.Fatalf("submitted %d times; want %d", got, wantSubmissions)
+				}
+				if policy.wantRetry {
+					if legacy {
+						var duplicate SubmitTxErrorV5
+						if !errors.As(err, &duplicate) {
+							t.Fatalf("got %v; want duplicate rejection", err)
+						}
+					} else if err != nil {
+						t.Fatalf("submit: %v", err)
+					}
+					return
+				}
+				var closeErr *websocket.CloseError
+				if !errors.As(err, &closeErr) {
+					t.Fatalf("got %v; want the original connection error", err)
+				}
+			})
+		}
+	}
+}
+
 func TestQuery_poolDropsExpiredIdleConnection(t *testing.T) {
 	server := newEchoServer(t, nil)
 	client := New(

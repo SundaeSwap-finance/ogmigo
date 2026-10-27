@@ -18,12 +18,13 @@ import "time"
 
 // Options available to ogmios client
 type Options struct {
-	endpoint        string
-	logger          Logger
-	pipeline        int
-	saveInterval    uint64
-	poolSize        int
-	poolIdleTimeout time.Duration
+	endpoint          string
+	logger            Logger
+	pipeline          int
+	saveInterval      uint64
+	poolSize          int
+	poolIdleTimeout   time.Duration
+	submissionRetries bool
 }
 
 // Option to cardano client
@@ -67,13 +68,27 @@ func WithPipeline(n int) Option {
 // A pooled client holds connections open after a call returns. Call
 // Client.CloseIdleConnections when the client is no longer needed.
 //
-// A call that fails because a reused connection had been closed while idle is
-// retried once on a new connection. Should the server have acted on the
-// request before the connection dropped, a retried SubmitTx reports the
-// node's rejection of the duplicate rather than the original hash.
+// State queries and transaction evaluation retry once on a new connection
+// when a reused connection is closed. Transaction submissions do not retry
+// unless WithSubmissionRetries(true) is also set.
 func WithConnectionPool(n int) Option {
 	return func(opts *Options) {
 		opts.poolSize = n
+	}
+}
+
+// WithSubmissionRetries allows SubmitTx and SubmitTxV5 to retry once on a new
+// connection when a reused connection fails. It defaults to false and has no
+// effect unless WithConnectionPool is also set. Calls on fresh connections
+// and cancelled calls are never retried.
+//
+// The server may have accepted the first submission before the connection
+// failed. In that case a retry can return a duplicate rejection instead of
+// the original success. When retries are disabled, the original connection
+// error is returned and the submission outcome remains uncertain.
+func WithSubmissionRetries(enabled bool) Option {
+	return func(opts *Options) {
+		opts.submissionRetries = enabled
 	}
 }
 

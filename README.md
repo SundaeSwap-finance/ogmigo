@@ -53,6 +53,12 @@ Each pooled connection carries one call at a time. Idle connections are
 closed after 30 seconds by default (`WithPoolIdleTimeout`). Chain sync and
 mempool monitoring are unaffected; they hold their own connections.
 
+State queries and transaction evaluation retry once on a fresh connection
+if a reused connection is closed. Transaction submissions return the original
+connection error unless `WithSubmissionRetries(true)` is set. Opting in can
+return a duplicate rejection if the server accepted the first submission
+before the connection failed.
+
 ### Submodules
 
 `ogmigo` imports `ogmios` as a submodule for testing purposes. To fetch the submodules,
@@ -60,5 +66,4 @@ mempool monitoring are unaffected; they hold their own connections.
 ```bash
 git submodule update --init --recursive
 ```
-
 
