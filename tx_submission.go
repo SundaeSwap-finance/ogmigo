@@ -65,7 +65,7 @@ func (c *Client) SubmitTx(
 		)
 		raw json.RawMessage
 	)
-	if err := c.query(ctx, payload, &raw); err != nil {
+	if err := c.queryWithRetry(ctx, payload, &raw, c.options.submissionRetries); err != nil {
 		return nil, fmt.Errorf("failed to submit TX: %w", err)
 	}
 
@@ -156,7 +156,7 @@ func (c *Client) SubmitTxV5(ctx context.Context, data string) (err error) {
 		payload = makePayloadV5("SubmitTx", Map{"submit": data})
 		raw     json.RawMessage
 	)
-	if err := c.query(ctx, payload, &raw); err != nil {
+	if err := c.queryWithRetry(ctx, payload, &raw, c.options.submissionRetries); err != nil {
 		return fmt.Errorf("failed to submit TX: %w", err)
 	}
 	return readSubmitTxV5(raw)
