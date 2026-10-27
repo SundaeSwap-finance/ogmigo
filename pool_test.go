@@ -107,6 +107,50 @@ func toString(v any) string {
 	return string(data)
 }
 
+func TestConnPool_pruneReleasesExpiredReferences(t *testing.T) {
+	for count := range 4 {
+		t.Run(string(rune('0'+count))+" expired", func(t *testing.T) {
+			conns := []*websocket.Conn{{}, {}, {}}
+			now := time.Now()
+			pool := newConnPool(len(conns), time.Minute)
+			pool.idle = make([]idleConn, len(conns))
+			for i, conn := range conns {
+				since := now
+				if i < count {
+					since = now.Add(-time.Minute)
+				}
+				pool.idle[i] = idleConn{conn: conn, since: since}
+			}
+
+			pool.mu.Lock()
+			expired := pool.pruneLocked(now)
+			pool.mu.Unlock()
+			if len(expired) != count {
+				t.Fatalf("expired %d connections; want %d", len(expired), count)
+			}
+			for i, conn := range expired {
+				if conn != conns[i] {
+					t.Fatalf("expired connection %d is out of order", i)
+				}
+			}
+			if len(pool.idle) != len(conns)-count {
+				t.Fatalf("retained %d connections; want %d", len(pool.idle), len(conns)-count)
+			}
+			for i, idle := range pool.idle {
+				if idle.conn != conns[count+i] || idle.since != now {
+					t.Fatalf("retained connection %d changed", i)
+				}
+			}
+			// GC scans the backing array beyond the slice length as well.
+			for i, idle := range pool.idle[len(pool.idle):cap(pool.idle)] {
+				if idle.conn != nil || !idle.since.IsZero() {
+					t.Errorf("unused slot %d retains an idle connection", len(pool.idle)+i)
+				}
+			}
+		})
+	}
+}
+
 func TestQuery_withoutPoolDialsPerCall(t *testing.T) {
 	server := newEchoServer(t, nil)
 	client := New(WithEndpoint(server.endpoint()))

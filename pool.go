@@ -142,7 +142,9 @@ func (p *connPool) pruneLocked(now time.Time) []*websocket.Conn {
 	for i := range n {
 		expired[i] = p.idle[i].conn
 	}
-	p.idle = append(p.idle[:0], p.idle[n:]...)
+	remaining := copy(p.idle, p.idle[n:])
+	clear(p.idle[remaining:])
+	p.idle = p.idle[:remaining]
 	return expired
 }
 
