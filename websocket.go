@@ -36,16 +36,22 @@ func (c *Client) query(
 	payload any,
 	v any,
 ) error {
+	return c.queryWithRetry(ctx, payload, v, true)
+}
+
+func (c *Client) queryWithRetry(
+	ctx context.Context,
+	payload any,
+	v any,
+	retry bool,
+) error {
 	conn, reused, err := c.acquireConn(ctx)
 	if err != nil {
 		return err
 	}
 	raw, delivered, keep, err := roundTrip(ctx, conn, payload)
-	if err != nil && reused && ctx.Err() == nil &&
+	if err != nil && retry && reused && ctx.Err() == nil &&
 		(!delivered || isConnClosed(err)) {
-		// The pooled connection was closed while it sat idle, typically by
-		// the server or a proxy reaping it. Retry once on a new connection
-		// rather than surface a failure the caller did not cause.
 		conn, err = c.dial(ctx)
 		if err != nil {
 			return err
